@@ -1,0 +1,126 @@
+{
+  "products": [
+    {
+      "name": "GEOTEXTILE 300 GSM (Laying Work)",
+      "size": "2 x 8 Meter"
+    },
+    {
+      "name": "GEOTEXTILE 400 GSM (Laying Work)",
+      "size": "2 x 8 Meter"
+    },
+    {
+      "name": "GEOTEXTILE 500 GSM (Laying Work)",
+      "size": "2 x 8 Meter"
+    },
+    {
+      "name": "Old GEOTEXTILE Removing Work",
+      "size": "2 x 8 Meter"
+    },
+    {
+      "name": "HDPE Pipe",
+      "size": "63 mm x 6 Meter"
+    },
+    {
+      "name": "HDPE Pipe",
+      "size": "90 mm x 6 Meter"
+    },
+    {
+      "name": "HDPE Pipe",
+      "size": "110 mm x 6 Meter"
+    },
+    {
+      "name": "Drip Lateral Pipe",
+      "size": "16 mm x 1000 Meter"
+    },
+    {
+      "name": "Drip Emitter / Dripper",
+      "size": "4 LPH"
+    },
+    {
+      "name": "Drip Emitter / Dripper",
+      "size": "8 LPH"
+    },
+    {
+      "name": "Micro Sprinkler",
+      "size": "50 LPH"
+    },
+    {
+      "name": "Micro Sprinkler",
+      "size": "90 LPH"
+    },
+    {
+      "name": "Ball Valve",
+      "size": "63 mm"
+    },
+    {
+      "name": "Ball Valve",
+      "size": "90 mm"
+    },
+    {
+      "name": "Filter Unit (Sand + Screen)",
+      "size": "2 Inch"
+    },
+    {
+      "name": "Filter Unit (Sand + Screen)",
+      "size": "3 Inch"
+    },
+    {
+      "name": "Fertigation Tank",
+      "size": "200 Liters"
+    },
+    {
+      "name": "Fertigation Tank",
+      "size": "500 Liters"
+    },
+    {
+      "name": "Pressure Gauge",
+      "size": "0-10 kg/cm²"
+    },
+    {
+      "name": "Air Release Valve",
+      "size": "1 Inch"
+    },
+    {
+      "name": "End Cap",
+      "size": "16 mm"
+    },
+    {
+      "name": "Tee Connector",
+      "size": "16 mm"
+    },
+    {
+      "name": "Elbow Connector",
+      "size": "16 mm"
+    },
+    {
+      "name": "Grommet",
+      "size": "16 mm"
+    },
+    {
+      "name": "Bonding Liquid (Special Adhesive)",
+      "size": "1 Litre Can"
+    },
+    {
+      "name": "Pump Set (Monoblock)",
+      "size": "1 HP"
+    },
+    {
+      "name": "Pump Set (Monoblock)",
+      "size": "2 HP"
+    },
+    {
+      "name": "Solar Pump Controller",
+      "size": "1 HP"
+    },
+    {
+      "name": "Overhead Tank Installation Work",
+      "size": "500 Liters"
+    },
+    {
+      "name": "Main Line Laying Work",
+      "size": "Per Meter"
+    }
+  ],
+  "filename": "AVR_Sample_Products.xlsx",
+  "updatedAt": "2026-03-10T15:48:33.383Z"
+}
