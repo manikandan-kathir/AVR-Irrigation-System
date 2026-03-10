@@ -394,6 +394,7 @@ Tamil Nadu.</textarea>
     </label>
     <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="loadExcel(this)">
     <button id="excel-clear-btn" onclick="clearExcel()" style="display:none;padding:7px 14px;background:#fde8e8;color:var(--danger);border:none;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">✕ Clear</button>
+    <button onclick="promptToken()" title="Set GitHub Token" style="padding:7px 10px;background:#f4f8fc;border:1.5px solid #c8d8e8;border-radius:8px;font-size:0.82rem;cursor:pointer;" id="token-btn">⚙️</button>
   </div>
 
   <div class="tbl-head">
@@ -614,6 +615,78 @@ function setGST(r,el){
 }
 
 
+// ── GitHub Storage for Product DB ─────────────────────────
+const GH_USER    = 'manikandan-kathir';
+const GH_REPO    = 'AVR-Irrigation-System';
+const GH_FILE    = 'products.json';
+const GH_API     = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}`;
+const GH_RAW     = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/${GH_FILE}`;
+
+function promptToken(){
+  const current = getToken();
+  const t = prompt('Enter your GitHub Personal Access Token:\n(Stored only in this browser — never in the code)', current||'');
+  if(t === null) return;
+  if(t.trim()){
+    localStorage.setItem('avr_gh_token', t.trim());
+    document.getElementById('token-btn').textContent = '⚙️✅';
+    setTimeout(()=>document.getElementById('token-btn').textContent='⚙️', 2000);
+  } else {
+    localStorage.removeItem('avr_gh_token');
+  }
+}
+
+function getToken(){
+  return localStorage.getItem('avr_gh_token') || '';
+}
+
+// Show token status on load
+window.addEventListener('load', ()=>{
+  if(getToken()) document.getElementById('token-btn').title = 'GitHub Token set ✅ — click to update';
+});
+
+async function saveProductDBCloud(products, filename){
+  const token = getToken();
+  if(!token){
+    alert('GitHub token not set. Go to Settings ⚙️ and enter your token.');
+    return;
+  }
+  try {
+    const headers = { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' };
+    let sha = null;
+    const check = await fetch(GH_API, { headers });
+    if(check.ok){ const existing = await check.json(); sha = existing.sha; }
+
+    const payload = { products, filename, updatedAt: new Date().toISOString() };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+    const body = { message: `Update products - ${filename}`, content };
+    if(sha) body.sha = sha;
+
+    const res = await fetch(GH_API, { method: 'PUT', headers, body: JSON.stringify(body) });
+    if(!res.ok) throw new Error('Save failed: ' + res.status);
+    console.log('Product DB saved to GitHub ✅');
+  } catch(e) {
+    console.warn('GitHub save failed, using localStorage fallback', e);
+    alert('Cloud save failed. Check your token in Settings ⚙️');
+  }
+  localStorage.setItem('avr_product_db', JSON.stringify({ products, filename, updatedAt: new Date().toISOString() }));
+}
+
+async function loadProductDBCloud(){
+  try {
+    // Public raw URL — no token needed
+    const res = await fetch(GH_RAW + '?t=' + Date.now());
+    if(res.ok){
+      const data = await res.json();
+      return data;
+    }
+  } catch(e) {
+    console.warn('GitHub load failed, trying localStorage', e);
+  }
+  const local = localStorage.getItem('avr_product_db');
+  if(local) return JSON.parse(local);
+  return null;
+}
+
 // ── Excel Upload ──────────────────────────────────────────
 function loadExcel(input){
   const file=input.files[0]; if(!file) return;
@@ -639,10 +712,15 @@ function loadExcel(input){
         size: sizeCol ? String(r[sizeCol]||'').trim() : ''
       })).filter(p=>p.name);
 
-      document.getElementById('excel-status').innerHTML=
-        `<span style="color:#1e8449;font-weight:600">✅ ${productDB.length} products loaded</span> from <em>${file.name}</em>${sizeCol?' — Size column: <b>'+sizeCol+'</b>':' — No size column found'}`;
+      const statusEl = document.getElementById('excel-status');
+      statusEl.innerHTML=`<span style="color:#1e8449;font-weight:600">✅ ${productDB.length} products loaded</span> from <em>${file.name}</em>${sizeCol?' — Size column: <b>'+sizeCol+'</b>':' — No size column found'} <span style="color:#aaa;font-size:0.8rem">— saving to cloud...</span>`;
       document.getElementById('excel-clear-btn').style.display='';
       input.value='';
+
+      // Save to cloud
+      saveProductDBCloud(productDB, file.name).then(()=>{
+        statusEl.innerHTML=`<span style="color:#1e8449;font-weight:600">✅ ${productDB.length} products loaded & saved</span> from <em>${file.name}</em>${sizeCol?' — Size column: <b>'+sizeCol+'</b>':''} <span style="color:#1e8449;font-size:0.8rem">☁️ Synced</span>`;
+      });
     }catch(err){
       alert('Error reading Excel: '+err.message);
     }
@@ -652,9 +730,27 @@ function loadExcel(input){
 
 function clearExcel(){
   productDB=[];
+  localStorage.removeItem('avr_product_db');
   document.getElementById('excel-status').textContent='No file uploaded — upload to enable product search';
   document.getElementById('excel-clear-btn').style.display='none';
 }
+
+// Load saved product DB on page start
+(async function initProductDB(){
+  const statusEl = document.getElementById('excel-status');
+  if(!statusEl) return;
+  statusEl.innerHTML = '<span style="color:#aaa">🔄 Loading saved products...</span>';
+  const saved = await loadProductDBCloud();
+  if(saved && saved.products && saved.products.length){
+    productDB = saved.products;
+    const d = new Date(saved.updatedAt);
+    const dateStr = d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    statusEl.innerHTML = `<span style="color:#1e8449;font-weight:600">✅ ${productDB.length} products loaded</span> from <em>${saved.filename||'saved file'}</em> <span style="color:#aaa;font-size:0.8rem">— last updated ${dateStr} ☁️</span>`;
+    document.getElementById('excel-clear-btn').style.display='';
+  } else {
+    statusEl.textContent = 'No file uploaded — upload to enable product search';
+  }
+})();
 
 // ── Add Row ───────────────────────────────────────────────
 function addRow(desc='',size='',unit='Sq mtr',qty=1,rate=0){
