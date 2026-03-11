@@ -296,6 +296,18 @@ input:checked + .slider:before { transform: translateX(22px); }
   .card { padding: 1rem; margin-bottom: 0.8rem; border-radius: 10px; }
   .grid-2, .grid-3 { grid-template-columns: 1fr; gap: 0.6rem; }
 
+  /* Collapse all 2-column layout rows to single column */
+  main > div[style*="grid-template-columns:1fr 1fr"],
+  main > div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Transport+GST | Summary side-by-side → stack vertically */
+  div[style*="grid-template-columns:1fr auto"] {
+    grid-template-columns: 1fr !important;
+  }
+  .summary-box { width: 100% !important; }
+
   /* Header */
   header { flex-direction: column; height: auto; padding: 0.8rem 1rem; gap: 0.6rem; text-align: center; }
   .logo-area { justify-content: center; }
@@ -310,32 +322,17 @@ input:checked + .slider:before { transform: translateX(22px); }
   /* Product table */
   .tbl-head { display: none; }
   .prod-row {
-    display: flex; flex-direction: column;
+    display: grid; grid-template-columns: 24px 1fr 32px; gap: 6px;
     background: #f8fbff; border-radius: 10px;
     padding: 10px; margin-bottom: 10px;
-    border: 1px solid #d0e4f0; gap: 8px;
-    position: relative;
+    border: 1px solid #d0e4f0;
   }
-  .prod-row .sno {
-    position: absolute; top: 10px; left: 10px;
-    font-size: 0.75rem; color: var(--muted);
-  }
-  .prod-row .desc-cell { width: 100%; margin-left: 20px; }
-  .prod-row input, .prod-row select { width: 100%; box-sizing: border-box; }
-  .prod-row .btn-del { position: absolute; top: 8px; right: 8px; }
-  .amt-cell { width: 100%; border-radius: 6px; justify-content: flex-start; }
-
-  /* Add two-col layout for size/unit/qty/rate on mobile */
-  .prod-row { display: grid; grid-template-columns: 24px 1fr 32px; gap: 6px; }
   .prod-row .desc-cell { grid-column: 1 / -1; }
   .prod-row .amt-cell  { grid-column: 1 / -1; }
   .prod-row .btn-del   { grid-column: 3; grid-row: 1; }
-  .prod-row .sno       { grid-column: 1; grid-row: 1; align-self: center; text-align: center; }
-
-  /* Summary */
-  .summary-wrap { justify-content: stretch; }
-  .summary-box { width: 100%; }
-  .sum-amount { width: auto; flex: 1; }
+  .prod-row .sno       { grid-column: 1; grid-row: 1; align-self: center; text-align: center; font-size:0.75rem; color:var(--muted); }
+  .prod-row input, .prod-row select { width: 100%; box-sizing: border-box; }
+  .amt-cell { width: 100%; }
 
   /* Excel bar */
   #excel-upload-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -351,9 +348,6 @@ input:checked + .slider:before { transform: translateX(22px); }
 
   /* Lock badge */
   .lock-badge { font-size: 0.7rem; }
-
-  /* Notes fields */
-  .grid-2 input, .grid-2 textarea { font-size: 0.85rem; }
 
   /* Transport info */
   .transport-info { font-size: 0.8rem; flex-direction: column; gap: 4px; }
@@ -406,69 +400,78 @@ input:checked + .slider:before { transform: translateX(22px); }
 
 <main>
 
-<!-- 1. COMPANY DETAILS -->
-<div class="card">
-  <div class="card-title">
-    <div class="card-title-left">🏢 Company / Franchise Details</div>
-    <div class="toggle-row">
-      <span class="lock-badge locked" id="co-badge">🔒 Locked</span>
-      <label class="toggle"><input type="checkbox" id="tog-company" onchange="toggleCoEdit(this)"><span class="slider"></span></label>
-      <span class="toggle-label" style="color:var(--muted);font-size:0.78rem">Enable Edit</span>
+<!-- ROW 1: Company (left) | Document + Customer (right) -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;margin-bottom:1rem">
+
+  <!-- LEFT: Company Details -->
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">
+      <div class="card-title-left">🏢 Company / Franchise Details</div>
+      <div class="toggle-row">
+        <span class="lock-badge locked" id="co-badge">🔒 Locked</span>
+        <label class="toggle"><input type="checkbox" id="tog-company" onchange="toggleCoEdit(this)"><span class="slider"></span></label>
+        <span class="toggle-label" style="color:var(--muted);font-size:0.78rem">Enable Edit</span>
+      </div>
     </div>
-  </div>
-  <div id="co-fields">
-    <div class="grid-2" style="margin-bottom:1rem">
-      <div><label>Company Name</label><input id="co-name" value="AVR Irrigation Systems" disabled oninput="document.getElementById('header-company').textContent=this.value"></div>
-      <div><label>GSTIN</label><input id="co-gst" value="ASDFG23456SDFGH" disabled></div>
-    </div>
-    <div style="margin-bottom:1rem"><label>Office Address</label>
-      <textarea id="co-addr" disabled>No. 2, KSR Complex,
+    <div id="co-fields">
+      <div class="grid-2" style="margin-bottom:0.8rem">
+        <div><label>Company Name</label><input id="co-name" value="AVR Irrigation Systems" disabled oninput="document.getElementById('header-company').textContent=this.value"></div>
+        <div><label>GSTIN</label><input id="co-gst" value="ASDFG23456SDFGH" disabled></div>
+      </div>
+      <div style="margin-bottom:0.8rem"><label>Office Address</label>
+        <textarea id="co-addr" disabled>No. 2, KSR Complex,
 Cuddalore to Viruthachalam Main Road,
 Annavalli, Cuddalore - 607003
 Tamil Nadu.</textarea>
-    </div>
-    <div class="grid-3">
-      <div><label>Phone</label><input id="co-phone" value="+91-9345678978" disabled></div>
-      <div><label>Email</label><input id="co-email" value="mail.com" disabled></div>
-      <div><label>Website (optional)</label><input id="co-web" placeholder="www.example.com" disabled></div>
-    </div>
-  </div>
-</div>
-
-<!-- 2. DOCUMENT DETAILS -->
-<div class="card">
-  <div class="card-title"><div class="card-title-left" id="doc-title-lbl">📋 Estimate Details</div></div>
-  <div class="grid-2">
-    <div><label>Date</label><input type="date" id="doc-date"></div>
-    <div id="inv-no-wrap" style="display:none">
-      <label>Invoice No.</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="doc-no" placeholder="INV-2026-001" style="flex:1">
-        <button type="button" onclick="const n=incrementInvNo();document.getElementById('doc-no').value=n;" 
-          style="padding:7px 12px;background:#eaf3fb;border:1.5px solid #2980b9;border-radius:7px;color:#1a5276;font-size:0.8rem;cursor:pointer;white-space:nowrap;font-weight:600">
-          ↻ New No.
-        </button>
+      </div>
+      <div class="grid-3">
+        <div><label>Phone</label><input id="co-phone" value="+91-9345678978" disabled></div>
+        <div><label>Email</label><input id="co-email" value="mail.com" disabled></div>
+        <div><label>Website (optional)</label><input id="co-web" placeholder="www.example.com" disabled></div>
       </div>
     </div>
   </div>
+
+  <!-- RIGHT: Document + Customer stacked -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Document Details -->
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title"><div class="card-title-left" id="doc-title-lbl">📋 Estimate Details</div></div>
+      <div class="grid-2">
+        <div><label>Date</label><input type="date" id="doc-date"></div>
+        <div id="inv-no-wrap" style="display:none">
+          <label>Invoice No.</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="doc-no" placeholder="001" style="flex:1">
+            <button type="button" onclick="const n=incrementInvNo();document.getElementById('doc-no').value=n;"
+              style="padding:7px 12px;background:#eaf3fb;border:1.5px solid #2980b9;border-radius:7px;color:#1a5276;font-size:0.8rem;cursor:pointer;white-space:nowrap;font-weight:600">
+              ↻ New No.
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer Details -->
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title"><div class="card-title-left">👤 Customer Details</div></div>
+      <div class="grid-2" style="margin-bottom:0.8rem">
+        <div><label>Name of Customer</label><input id="cust-name" placeholder="e.g. Manikandan K"></div>
+        <div><label>Phone</label><input id="cust-phone" placeholder="+91 XXXXX XXXXX"></div>
+      </div>
+      <div style="margin-bottom:0.8rem"><label>Address</label><textarea id="cust-addr" placeholder="Street, Village / Town, State - PIN"></textarea></div>
+      <div class="grid-3">
+        <div><label>District</label><input id="cust-dist" placeholder="e.g. Cuddalore"></div>
+        <div><label>GSTIN (if applicable)</label><input id="cust-gst" placeholder="Optional"></div>
+        <div><label>Description / Project</label><input id="cust-desc" placeholder="e.g. Water Reservoir"></div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<!-- 3. CUSTOMER DETAILS -->
-<div class="card">
-  <div class="card-title"><div class="card-title-left">👤 Customer Details</div></div>
-  <div class="grid-2">
-    <div><label>Name of Customer</label><input id="cust-name" placeholder="e.g. Manikandan K"></div>
-    <div><label>Description / Project</label><input id="cust-desc" placeholder="e.g. Water Reservoir"></div>
-  </div>
-  <div style="margin-top:1rem"><label>Address</label><textarea id="cust-addr" placeholder="Street, Village / Town, State - PIN"></textarea></div>
-  <div class="grid-3" style="margin-top:1rem">
-    <div><label>District</label><input id="cust-dist" placeholder="e.g. Cuddalore"></div>
-    <div><label>GSTIN (if applicable)</label><input id="cust-gst" placeholder="Optional"></div>
-    <div><label>Phone</label><input id="cust-phone" placeholder="+91 XXXXX XXXXX"></div>
-  </div>
-</div>
-
-<!-- 4. PRODUCTS -->
+<!-- ROW 2: Products (full width) -->
 <div class="card">
   <div class="card-title"><div class="card-title-left">📦 Products / Services</div></div>
 
@@ -498,60 +501,56 @@ Tamil Nadu.</textarea>
   <div id="prod-list"></div>
   <button class="btn-add" onclick="addRow()">＋ Add Line Item</button>
 
-  <div class="transport-info">
-    🚚 <strong style="color:var(--accent)">Transportation Charges:</strong>
-    <span style="color:var(--muted)">₹10 × <strong id="tr-qty" style="color:var(--text)">0</strong> qty (1st item) =</span>
-    <strong style="color:var(--primary)" id="tr-amt">₹0.00</strong>
-    <span style="font-size:0.75rem;color:var(--muted)">(auto-calculated)</span>
-  </div>
-
-  <!-- GST -->
-  <div style="margin-top:1.2rem;padding-top:1rem;border-top:2px solid var(--border)">
-    <label style="margin-bottom:8px;display:block">Tax Rate</label>
-    <div class="gst-chips">
-      <div class="gst-chip" onclick="setGST(0,this)">0% Exempt</div>
-      <div class="gst-chip" onclick="setGST(5,this)">5%</div>
-      <div class="gst-chip" onclick="setGST(12,this)">12%</div>
-      <div class="gst-chip active" onclick="setGST(18,this)">18%</div>
-      <div class="gst-chip" onclick="setGST(28,this)">28%</div>
+  <!-- Transport + GST (left) | Summary (right) -->
+  <div style="display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:start;margin-top:1rem;padding-top:1rem;border-top:2px solid var(--border)">
+    <div>
+      <div class="transport-info" style="margin-top:0">
+        🚚 <strong style="color:var(--accent)">Transportation Charges:</strong>
+        <span style="color:var(--muted)">₹10 × <strong id="tr-qty" style="color:var(--text)">0</strong> qty (1st item) =</span>
+        <strong style="color:var(--primary)" id="tr-amt">₹0.00</strong>
+        <span style="font-size:0.75rem;color:var(--muted)">(auto-calculated)</span>
+      </div>
+      <div style="margin-top:1rem">
+        <label style="margin-bottom:8px;display:block">Tax Rate</label>
+        <div class="gst-chips">
+          <div class="gst-chip" onclick="setGST(0,this)">0% Exempt</div>
+          <div class="gst-chip" onclick="setGST(5,this)">5%</div>
+          <div class="gst-chip" onclick="setGST(12,this)">12%</div>
+          <div class="gst-chip active" onclick="setGST(18,this)">18%</div>
+          <div class="gst-chip" onclick="setGST(28,this)">28%</div>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <!-- Summary -->
-  <div class="summary-wrap">
-    <div class="summary-box">
+    <div class="summary-box" style="width:320px">
       <div class="sum-row"><div class="sum-lbl">Transportation Charges</div><div class="sum-amount" id="s-transport">&#8377; 0.00</div></div>
       <div class="sum-row"><div class="sum-lbl">Sub Total</div><div class="sum-amount" id="s-sub">&#8377; 0.00</div></div>
       <div class="sum-row"><div class="sum-lbl" id="s-tax-lbl">Taxes (18.00%)</div><div class="sum-amount" id="s-tax">&#8377; 0.00</div></div>
       <div class="sum-row grand"><div class="sum-lbl">GRAND TOTAL</div><div class="sum-amount" id="s-total">&#8377; 0.00</div></div>
     </div>
   </div>
-  </div>
 </div>
 
-<!-- 5. NOTES -->
-<div class="card">
-  <div class="card-title"><div class="card-title-left">📝 Notes</div></div>
-  <div class="grid-3" style="margin-bottom:1rem">
-    <div>
-      <label>Applicable Taxes</label>
-      <input id="note-tax" value="18.00%" readonly style="background:#f0f7ff;cursor:default;">
-      <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">Auto-synced from Tax Rate</div>
-    </div>
-    <div><label>Delivery Period</label><input id="note-delivery" value="2 DAYS"></div>
-    <div>
-      <label>Transportation Charges</label>
-      <input id="note-transport" value="Including Door Delivery">
-    </div>
-  </div>
-  <label>Additional Notes</label>
-  <textarea id="notes" placeholder="Any additional notes for the customer..."></textarea>
-</div>
+<!-- ROW 3: Notes (left) | Terms (right) -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;margin-bottom:1rem">
 
-<!-- 6. TERMS -->
-<div class="card">
-  <div class="card-title"><div class="card-title-left">📜 Terms &amp; Conditions</div></div>
-  <textarea id="terms" style="min-height:220px">Warranty & Service
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title"><div class="card-title-left">📝 Notes</div></div>
+    <div class="grid-2" style="margin-bottom:0.8rem">
+      <div>
+        <label>Applicable Taxes</label>
+        <input id="note-tax" value="18.00%" readonly style="background:#f0f7ff;cursor:default;">
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">Auto-synced from Tax Rate</div>
+      </div>
+      <div><label>Delivery Period</label><input id="note-delivery" value="2 DAYS"></div>
+    </div>
+    <div style="margin-bottom:0.8rem"><label>Transportation Charges</label><input id="note-transport" value="Including Door Delivery"></div>
+    <label>Additional Notes</label>
+    <textarea id="notes" placeholder="Any additional notes for the customer..."></textarea>
+  </div>
+
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title"><div class="card-title-left">📜 Terms &amp; Conditions</div></div>
+    <textarea id="terms" style="min-height:260px">Warranty & Service
 • The entire project installation is covered by a 1-year warranty from the completion date.
 • Warranty includes damages to the installed GEOTEXTILE system and related parts.
 • If the GEOTEXTILE develops fungus, cracks, or other damage caused by external factors, the service cost must be borne by the client (party) and not by the company.
@@ -566,58 +565,61 @@ Project Duration & Scope
 Payment Terms
 • 50% advance payment to confirm and start the project.
 • 50% payment after completion of installation work.</textarea>
+  </div>
+
 </div>
 
-<!-- 7. BANK DETAILS -->
-<div class="card">
-  <div class="card-title">
-    <div class="card-title-left">🏦 Bank Details</div>
-    <div class="toggle-row">
-      <span class="lock-badge locked" id="bank-badge">🔒 Locked</span>
-      <label class="toggle"><input type="checkbox" id="tog-bank" onchange="toggleBankEdit(this)"><span class="slider"></span></label>
-      <span class="toggle-label" style="color:var(--muted);font-size:0.78rem">Enable Edit</span>
-    </div>
-  </div>
-  <div id="bank-fields">
-    <div class="grid-3">
-      <div><label>Account Name</label><input id="bank-name" value="AVR IRRIGATION SYSTEMS" disabled></div>
-      <div><label>GST No.</label><input id="bank-gst" value="33ASDFG656718E1Z1" disabled></div>
-      <div><label>Account Number</label><input id="bank-acc" value="0303145564796648" disabled></div>
-    </div>
-    <div class="grid-3" style="margin-top:1rem">
-      <div><label>IFSC Code</label><input id="bank-ifsc" value="DERT0IN0356" disabled></div>
-      <div><label>Bank Name</label><input id="bank-bank" value="Sample" disabled></div>
-      <div><label>Branch</label><input id="bank-branch" value="Chennai" disabled></div>
-    </div>
-  </div>
-</div>
+<!-- ROW 4: Bank (left) | Seal (right) -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;margin-bottom:1rem">
 
-<!-- 8. COMPANY SEAL -->
-<div class="card">
-  <div class="card-title">
-    <div class="card-title-left">🔏 Company Seal</div>
-    <div class="toggle-row">
-      <label class="toggle"><input type="checkbox" id="tog-seal" onchange="toggleSeal(this)"><span class="slider"></span></label>
-      <span class="toggle-label">Attach Seal on PDF</span>
-    </div>
-  </div>
-  <div id="seal-sec" style="display:none">
-    <div class="upload-area" onclick="document.getElementById('seal-file').click()">
-      <input type="file" id="seal-file" accept="image/*" style="display:none" onchange="loadSeal(this)">
-      <div id="seal-preview">
-        <p style="font-size:1.5rem;margin-bottom:4px">🖼️</p>
-        <p>Click to upload company seal image</p>
-        <p style="font-size:0.75rem;margin-top:4px">PNG or JPG — appears bottom-right on PDF with Authorized Signatory</p>
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">
+      <div class="card-title-left">🏦 Bank Details</div>
+      <div class="toggle-row">
+        <span class="lock-badge locked" id="bank-badge">🔒 Locked</span>
+        <label class="toggle"><input type="checkbox" id="tog-bank" onchange="toggleBankEdit(this)"><span class="slider"></span></label>
+        <span class="toggle-label" style="color:var(--muted);font-size:0.78rem">Enable Edit</span>
       </div>
     </div>
-    <p style="font-size:0.78rem;color:var(--muted);margin-top:8px">
-      💡 Replace <code>sealDataUrl</code> in the script with your base64 image string to use a fixed seal.
-    </p>
+    <div id="bank-fields">
+      <div class="grid-3" style="margin-bottom:0.8rem">
+        <div><label>Account Name</label><input id="bank-name" value="AVR IRRIGATION SYSTEMS" disabled></div>
+        <div><label>GST No.</label><input id="bank-gst" value="33ASDFG656718E1Z1" disabled></div>
+        <div><label>Account Number</label><input id="bank-acc" value="0303145564796648" disabled></div>
+      </div>
+      <div class="grid-3">
+        <div><label>IFSC Code</label><input id="bank-ifsc" value="DERT0IN0356" disabled></div>
+        <div><label>Bank Name</label><input id="bank-bank" value="Sample" disabled></div>
+        <div><label>Branch</label><input id="bank-branch" value="Chennai" disabled></div>
+      </div>
+    </div>
   </div>
-  <div id="seal-placeholder" style="text-align:center;padding:1.5rem;color:var(--muted)">
-    Toggle the switch to enable and upload your company seal image.
+
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">
+      <div class="card-title-left">🔏 Company Seal</div>
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="tog-seal" onchange="toggleSeal(this)"><span class="slider"></span></label>
+        <span class="toggle-label">Attach Seal on PDF</span>
+      </div>
+    </div>
+    <div id="seal-sec" style="display:none">
+      <div class="upload-area" onclick="document.getElementById('seal-file').click()">
+        <input type="file" id="seal-file" accept="image/*" style="display:none" onchange="loadSeal(this)">
+        <div id="seal-preview">
+          <p style="font-size:1.5rem;margin-bottom:4px">🖼️</p>
+          <p>Click to upload company seal image</p>
+          <p style="font-size:0.75rem;margin-top:4px">PNG or JPG — appears bottom-right on PDF</p>
+        </div>
+      </div>
+    </div>
+    <div id="seal-placeholder" style="text-align:center;padding:1.5rem;color:var(--muted)">
+      Toggle the switch to enable and upload your company seal image.
+    </div>
   </div>
+
 </div>
+
 
 <!-- ACTIONS -->
 <div class="actions">
