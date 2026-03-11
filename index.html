@@ -692,6 +692,14 @@ function toggleCoEdit(cb){
     .forEach(el=>el.disabled=!cb.checked);
   badge.className='lock-badge '+(cb.checked?'unlocked':'locked');
   badge.textContent=cb.checked?'🔓 Editable':'🔒 Locked';
+  if(!cb.checked){
+    // Locking — save to GitHub
+    badge.textContent='💾 Saving...';
+    saveSettingsCloud(collectSettings()).then(()=>{
+      badge.textContent='🔒 Locked';
+      badge.className='lock-badge locked';
+    });
+  }
 }
 
 function toggleBankEdit(cb){
@@ -700,6 +708,14 @@ function toggleBankEdit(cb){
     .forEach(el=>el.disabled=!cb.checked);
   badge.className='lock-badge '+(cb.checked?'unlocked':'locked');
   badge.textContent=cb.checked?'🔓 Editable':'🔒 Locked';
+  if(!cb.checked){
+    // Locking — save to GitHub
+    badge.textContent='💾 Saving...';
+    saveSettingsCloud(collectSettings()).then(()=>{
+      badge.textContent='🔒 Locked';
+      badge.className='lock-badge locked';
+    });
+  }
 }
 
 function setGST(r,el){
@@ -711,12 +727,63 @@ function setGST(r,el){
 }
 
 
-// ── GitHub Storage for Product DB ─────────────────────────
+// ── GitHub Storage ─────────────────────────────────────────
 const GH_USER    = 'manikandan-kathir';
 const GH_REPO    = 'AVR-Irrigation-System';
 const GH_FILE    = 'products.json';
 const GH_API     = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}`;
 const GH_RAW     = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/${GH_FILE}`;
+
+const GH_SETTINGS_FILE = 'settings.json';
+const GH_SETTINGS_API  = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_SETTINGS_FILE}`;
+const GH_SETTINGS_RAW  = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/${GH_SETTINGS_FILE}`;
+
+async function saveSettingsCloud(data){
+  const token = getToken();
+  if(!token) return;
+  try {
+    const headers = { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' };
+    let sha = null;
+    const check = await fetch(GH_SETTINGS_API, { headers });
+    if(check.ok){ const existing = await check.json(); sha = existing.sha; }
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+    const body = { message: 'Update settings', content };
+    if(sha) body.sha = sha;
+    const res = await fetch(GH_SETTINGS_API, { method:'PUT', headers, body: JSON.stringify(body) });
+    if(!res.ok) throw new Error('Save failed: ' + res.status);
+    console.log('Settings saved to GitHub');
+  } catch(e) {
+    console.warn('Settings save failed', e);
+  }
+}
+
+async function loadSettingsCloud(){
+  try {
+    const res = await fetch(GH_SETTINGS_RAW + '?t=' + Date.now());
+    if(res.ok) return await res.json();
+  } catch(e) { console.warn('Settings load failed', e); }
+  return null;
+}
+
+function applySettings(s){
+  if(!s) return;
+  const set = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined && val !== '') el.value = val; };
+  set('co-name', s.coName); set('co-gst', s.coGst); set('co-addr', s.coAddr);
+  set('co-phone', s.coPhone); set('co-email', s.coEmail); set('co-web', s.coWeb);
+  if(s.coName) document.getElementById('header-company').textContent = s.coName;
+  set('bank-name', s.bankName); set('bank-gst', s.bankGst); set('bank-acc', s.bankAcc);
+  set('bank-ifsc', s.bankIfsc); set('bank-bank', s.bankBank); set('bank-branch', s.bankBranch);
+}
+
+function collectSettings(){
+  const v = id => document.getElementById(id)?.value || '';
+  return {
+    coName: v('co-name'), coGst: v('co-gst'), coAddr: v('co-addr'),
+    coPhone: v('co-phone'), coEmail: v('co-email'), coWeb: v('co-web'),
+    bankName: v('bank-name'), bankGst: v('bank-gst'), bankAcc: v('bank-acc'),
+    bankIfsc: v('bank-ifsc'), bankBank: v('bank-bank'), bankBranch: v('bank-branch')
+  };
+}
 
 function toggleExcelEdit(cb){
   const badge = document.getElementById('excel-badge');
@@ -866,6 +933,12 @@ function clearExcel(){
   const statusEl = document.getElementById('excel-status');
   if(!statusEl){ hide(); return; }
 
+  // Load settings (company & bank) from GitHub
+  loadingMsg.textContent = 'Loading company settings...';
+  const settings = await loadSettingsCloud();
+  if(settings){ applySettings(settings); }
+
+  // Load products
   loadingMsg.textContent = 'Fetching product list...';
   const saved = await loadProductDBCloud();
   if(saved && saved.products && saved.products.length){
