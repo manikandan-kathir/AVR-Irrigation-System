@@ -464,7 +464,6 @@ Tamil Nadu.</textarea>
     </label>
     <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="loadExcel(this)" disabled>
     <button id="excel-clear-btn" onclick="clearExcel()" style="display:none;padding:7px 14px;background:#fde8e8;color:var(--danger);border:none;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">✕ Clear</button>
-    <button onclick="promptToken()" title="Set GitHub Token" style="padding:7px 10px;background:#f4f8fc;border:1.5px solid #c8d8e8;border-radius:8px;font-size:0.82rem;cursor:pointer;" id="token-btn">⚙️</button>
   </div>
 
   <div class="tbl-head">
@@ -709,6 +708,8 @@ function toggleExcelEdit(cb){
     clearBtn.style.display='none';
   }
 }
+
+function promptToken(){
   const current = getToken();
   const t = prompt('Enter your GitHub Personal Access Token:\n(Stored only in this browser — never in the code)', current||'');
   if(t === null) return;
