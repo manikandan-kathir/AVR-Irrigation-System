@@ -365,6 +365,31 @@ input:checked + .slider:before { transform: translateX(22px); }
 </head>
 <body>
 
+<!-- Loading Screen -->
+<div id="loading-screen" style="
+  position:fixed; inset:0; z-index:9999;
+  background:linear-gradient(135deg,#1a5276,#2980b9);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:20px;
+">
+  <div style="font-size:3rem">💧</div>
+  <div style="color:white;font-family:'Poppins',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:1px">AVR Irrigation Systems</div>
+  <div style="color:rgba(255,255,255,0.8);font-size:0.9rem">Billing & Estimate Generator</div>
+  <div style="margin-top:10px;display:flex;gap:8px">
+    <div class="dot-pulse" style="width:10px;height:10px;background:white;border-radius:50%;animation:pulse 1s ease-in-out infinite;"></div>
+    <div class="dot-pulse" style="width:10px;height:10px;background:white;border-radius:50%;animation:pulse 1s ease-in-out 0.2s infinite;"></div>
+    <div class="dot-pulse" style="width:10px;height:10px;background:white;border-radius:50%;animation:pulse 1s ease-in-out 0.4s infinite;"></div>
+  </div>
+  <div id="loading-msg" style="color:rgba(255,255,255,0.7);font-size:0.8rem;margin-top:4px">Loading...</div>
+</div>
+
+<style>
+@keyframes pulse {
+  0%,100%{ opacity:0.3; transform:scale(0.8); }
+  50%{ opacity:1; transform:scale(1.2); }
+}
+</style>
+
 <header>
   <div class="logo-area">
     <div class="logo-icon">💧</div>
@@ -827,19 +852,31 @@ function clearExcel(){
 
 // Load saved product DB on page start
 (async function initProductDB(){
+  const loadingMsg = document.getElementById('loading-msg');
+  const loadingScreen = document.getElementById('loading-screen');
+
+  const hide = () => {
+    loadingScreen.style.transition = 'opacity 0.5s ease';
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => loadingScreen.style.display = 'none', 500);
+  };
+
   const statusEl = document.getElementById('excel-status');
-  if(!statusEl) return;
-  statusEl.innerHTML = '<span style="color:#aaa">🔄 Loading saved products...</span>';
+  if(!statusEl){ hide(); return; }
+
+  loadingMsg.textContent = 'Fetching product list...';
   const saved = await loadProductDBCloud();
   if(saved && saved.products && saved.products.length){
     productDB = saved.products;
     const d = new Date(saved.updatedAt);
     const dateStr = d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
     statusEl.innerHTML = `<span style="color:#1e8449;font-weight:600">✅ ${productDB.length} products loaded</span> from <em>${saved.filename||'saved file'}</em> <span style="color:#aaa;font-size:0.8rem">— last updated ${dateStr} ☁️</span>`;
-    document.getElementById('excel-clear-btn').style.display='';
+    loadingMsg.textContent = `✅ ${productDB.length} products ready!`;
   } else {
     statusEl.textContent = 'No file uploaded — upload to enable product search';
+    loadingMsg.textContent = 'Ready!';
   }
+  setTimeout(hide, 600);
 })();
 
 // ── Add Row ───────────────────────────────────────────────
