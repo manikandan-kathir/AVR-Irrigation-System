@@ -392,9 +392,14 @@ input:checked + .slider:before { transform: translateX(22px); }
       <div class="logo-sub">Billing &amp; Estimate Generator</div>
     </div>
   </div>
-  <div class="doc-toggle">
-    <button id="btn-est" class="active" onclick="setType('estimate')">Estimate</button>
-    <button id="btn-inv" onclick="setType('invoice')">Tax Invoice</button>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="doc-toggle">
+      <button id="btn-est" class="active" onclick="setType('estimate')">Estimate</button>
+      <button id="btn-inv" onclick="setType('invoice')">Tax Invoice</button>
+    </div>
+    <button onclick="openHistory()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:8px;color:white;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">
+      📋 History <span id="hist-count" style="background:#e67e22;color:white;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:8px;display:none">0</span>
+    </button>
   </div>
 </header>
 
@@ -415,7 +420,7 @@ input:checked + .slider:before { transform: translateX(22px); }
     </div>
     <div id="co-fields">
       <div class="grid-2" style="margin-bottom:0.8rem">
-        <div><label>Company Name</label><input id="co-name" value="AVR Irrigation Systems" disabled oninput="document.getElementById('header-company').textContent=this.value"></div>
+        <div><label>Company Name</label><input id="co-name" value="AVR Irrigation Systems" disabled oninput="this.value=this.value.replace(/[0-9]/g,'');document.getElementById('header-company').textContent=this.value"></div>
         <div><label>GSTIN</label><input id="co-gst" value="ASDFG23456SDFGH" disabled></div>
       </div>
       <div style="margin-bottom:0.8rem"><label>Office Address</label>
@@ -425,8 +430,8 @@ Annavalli, Cuddalore - 607003
 Tamil Nadu.</textarea>
       </div>
       <div class="grid-3">
-        <div><label>Phone</label><input id="co-phone" value="+91-9345678978" disabled></div>
-        <div><label>Email</label><input id="co-email" value="mail.com" disabled></div>
+        <div><label>Phone</label><input id="co-phone" type="tel" value="+91-9345678978" disabled oninput="this.value=this.value.replace(/[^0-9+\s\-()]/g,'')"></div>
+        <div><label>Email</label><input id="co-email" type="email" value="mail.com" disabled onblur="if(this.value && !this.value.includes('@')){alert('Please enter a valid email address');this.focus();}"></div>
         <div><label>Website (optional)</label><input id="co-web" placeholder="www.example.com" disabled></div>
       </div>
     </div>
@@ -441,14 +446,22 @@ Tamil Nadu.</textarea>
       <div class="grid-2">
         <div><label>Date</label><input type="date" id="doc-date"></div>
         <div id="inv-no-wrap" style="display:none">
-          <label>Invoice No.</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input id="doc-no" placeholder="001" style="flex:1">
-            <button type="button" onclick="const n=incrementInvNo();document.getElementById('doc-no').value=n;"
-              style="padding:7px 12px;background:#edf7ed;border:1.5px solid #4e8a58;border-radius:7px;color:#3d6b45;font-size:0.8rem;cursor:pointer;white-space:nowrap;font-weight:600">
-              ↻ New No.
-            </button>
+          <div style="display:flex;gap:8px;margin-bottom:0.5rem">
+            <div style="flex:1">
+              <label>Last Generated</label>
+              <input id="last-inv-display" readonly style="background:#f0f5f0;color:#888;cursor:default;font-family:'Courier New',monospace;font-weight:700;letter-spacing:2px;" placeholder="000">
+            </div>
+            <div style="flex:1">
+              <label>Invoice No.</label>
+              <input id="doc-no" placeholder="001" style="font-family:'Courier New',monospace;font-weight:700;letter-spacing:2px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            </div>
           </div>
+          <button type="button" onclick="
+            const v=prompt('Enter last generated number to reset to:','0');
+            if(v!==null){ const n=setInvCounter(v); document.getElementById('doc-no').value=n; updateLastInvDisplay(); }
+          " style="padding:5px 12px;background:#edf7ed;border:1.5px solid #4e8a58;border-radius:7px;color:#3d6b45;font-size:0.75rem;cursor:pointer;font-weight:600;width:100%">
+            ↻ Reset Counter
+          </button>
         </div>
       </div>
     </div>
@@ -457,12 +470,12 @@ Tamil Nadu.</textarea>
     <div class="card" style="margin-bottom:0">
       <div class="card-title"><div class="card-title-left">👤 Customer Details</div></div>
       <div class="grid-2" style="margin-bottom:0.8rem">
-        <div><label>Name of Customer</label><input id="cust-name" placeholder="e.g. Manikandan K"></div>
-        <div><label>Phone</label><input id="cust-phone" placeholder="+91 XXXXX XXXXX"></div>
+        <div><label>Name of Customer</label><input id="cust-name" placeholder="e.g. Manikandan K" oninput="this.value=this.value.replace(/[0-9]/g,'')"></div>
+        <div><label>Phone</label><input id="cust-phone" type="tel" placeholder="+91 XXXXX XXXXX" pattern="[0-9+\s\-()]*" oninput="this.value=this.value.replace(/[^0-9+\s\-()]/g,'')"></div>
       </div>
       <div style="margin-bottom:0.8rem"><label>Address</label><textarea id="cust-addr" placeholder="Street, Village / Town, State - PIN"></textarea></div>
       <div class="grid-3">
-        <div><label>District</label><input id="cust-dist" placeholder="e.g. Cuddalore"></div>
+        <div><label>District</label><input id="cust-dist" placeholder="e.g. Cuddalore" oninput="this.value=this.value.replace(/[0-9]/g,'')"></div>
         <div><label>GSTIN (if applicable)</label><input id="cust-gst" placeholder="Optional"></div>
         <div><label>Description / Project</label><input id="cust-desc" placeholder="e.g. Water Reservoir"></div>
       </div>
@@ -549,8 +562,15 @@ Tamil Nadu.</textarea>
   </div>
 
   <div class="card" style="margin-bottom:0">
-    <div class="card-title"><div class="card-title-left">📜 Terms &amp; Conditions</div></div>
-    <textarea id="terms" style="min-height:260px">Warranty & Service
+    <div class="card-title">
+      <div class="card-title-left">📜 Terms &amp; Conditions</div>
+      <div class="toggle-row">
+        <span class="lock-badge locked" id="terms-badge">🔒 Locked</span>
+        <label class="toggle"><input type="checkbox" id="tog-terms" onchange="toggleTermsEdit(this)"><span class="slider"></span></label>
+        <span class="toggle-label" style="color:var(--muted);font-size:0.78rem">Enable Edit</span>
+      </div>
+    </div>
+    <textarea id="terms" disabled style="min-height:260px">Warranty & Service
 • The entire project installation is covered by a 1-year warranty from the completion date.
 • Warranty includes damages to the installed GEOTEXTILE system and related parts.
 • If the GEOTEXTILE develops fungus, cracks, or other damage caused by external factors, the service cost must be borne by the client (party) and not by the company.
@@ -623,7 +643,6 @@ Payment Terms
 
 <!-- ACTIONS -->
 <div class="actions">
-  <button class="btn btn-outline" onclick="resetForm()">🔄 Reset</button>
   <button class="btn btn-outline" onclick="showPreview()">👁 Preview</button>
   <button class="btn btn-primary" onclick="generatePDF()">⬇️ Download PDF</button>
 </div>
@@ -656,18 +675,40 @@ addRow('Old GEOTEXTILE removing work','2 x 8 Meter','Sq mtr',750,100);
 updateSummary();
 
 function getLastInvNo(){
-  const year = new Date().getFullYear();
-  const counter = parseInt(localStorage.getItem('avr_inv_counter_'+year)||'0');
-  if(counter === 0) return '';
-  return String(counter).padStart(3,'0');
+  const saved = parseInt(localStorage.getItem('avr_inv_last')||'0');
+  return String(saved + 1).padStart(3,'0');
+}
+
+function updateLastInvDisplay(){
+  const last = parseInt(localStorage.getItem('avr_inv_last')||'0');
+  const el = document.getElementById('last-inv-display');
+  if(el) el.value = String(last).padStart(3,'0');
 }
 
 function incrementInvNo(){
-  const year = new Date().getFullYear();
-  const key = 'avr_inv_counter_'+year;
-  const counter = parseInt(localStorage.getItem(key)||'0') + 1;
-  localStorage.setItem(key, counter);
-  return String(counter).padStart(3,'0');
+  // Only called for real invoices — increments and saves to GitHub
+  const next = parseInt(localStorage.getItem('avr_inv_last')||'0') + 1;
+  localStorage.setItem('avr_inv_last', next);
+  // Save to GitHub settings
+  const s = collectSettings();
+  s.lastInvNo = next;
+  saveSettingsCloud(s);
+  return String(next).padStart(3,'0');
+}
+
+function setInvCounter(n){
+  const num = parseInt(n)||0;
+  localStorage.setItem('avr_inv_last', num);
+  // Ask for period label
+  const now = new Date();
+  const defaultPeriod = now.toLocaleString('en-IN',{month:'long',year:'numeric'});
+  const period = prompt('Label this reset period (shown in history):', defaultPeriod);
+  if(period !== null) localStorage.setItem('avr_current_period', period||defaultPeriod);
+  const s = collectSettings();
+  s.lastInvNo = num;
+  s.savedYear = now.getFullYear();
+  saveSettingsCloud(s);
+  return String(num + 1).padStart(3,'0');
 }
 
 function setType(t){
@@ -679,10 +720,8 @@ function setType(t){
   wrap.style.display = t==='invoice' ? '' : 'none';
   if(t==='invoice'){
     const field = document.getElementById('doc-no');
-    if(!field.value){
-      // show last generated number (preview only, not increment)
-      field.value = getLastInvNo();
-    }
+    if(!field.value) field.value = getLastInvNo();
+    updateLastInvDisplay();
   }
 }
 
@@ -709,7 +748,20 @@ function toggleBankEdit(cb){
   badge.className='lock-badge '+(cb.checked?'unlocked':'locked');
   badge.textContent=cb.checked?'🔓 Editable':'🔒 Locked';
   if(!cb.checked){
-    // Locking — save to GitHub
+    badge.textContent='💾 Saving...';
+    saveSettingsCloud(collectSettings()).then(()=>{
+      badge.textContent='🔒 Locked';
+      badge.className='lock-badge locked';
+    });
+  }
+}
+
+function toggleTermsEdit(cb){
+  const badge=document.getElementById('terms-badge');
+  document.getElementById('terms').disabled=!cb.checked;
+  badge.className='lock-badge '+(cb.checked?'unlocked':'locked');
+  badge.textContent=cb.checked?'🔓 Editable':'🔒 Locked';
+  if(!cb.checked){
     badge.textContent='💾 Saving...';
     saveSettingsCloud(collectSettings()).then(()=>{
       badge.textContent='🔒 Locked';
@@ -773,6 +825,12 @@ function applySettings(s){
   if(s.coName) document.getElementById('header-company').textContent = s.coName;
   set('bank-name', s.bankName); set('bank-gst', s.bankGst); set('bank-acc', s.bankAcc);
   set('bank-ifsc', s.bankIfsc); set('bank-bank', s.bankBank); set('bank-branch', s.bankBranch);
+  if(s.terms) set('terms', s.terms);
+  if(s.lastInvNo !== undefined && s.lastInvNo !== null){
+    const local = parseInt(localStorage.getItem('avr_inv_last')||'0');
+    if(s.lastInvNo >= local) localStorage.setItem('avr_inv_last', s.lastInvNo);
+    updateLastInvDisplay();
+  }
 }
 
 function collectSettings(){
@@ -781,7 +839,9 @@ function collectSettings(){
     coName: v('co-name'), coGst: v('co-gst'), coAddr: v('co-addr'),
     coPhone: v('co-phone'), coEmail: v('co-email'), coWeb: v('co-web'),
     bankName: v('bank-name'), bankGst: v('bank-gst'), bankAcc: v('bank-acc'),
-    bankIfsc: v('bank-ifsc'), bankBank: v('bank-bank'), bankBranch: v('bank-branch')
+    bankIfsc: v('bank-ifsc'), bankBank: v('bank-bank'), bankBranch: v('bank-branch'),
+    terms: v('terms'),
+    lastInvNo: parseInt(localStorage.getItem('avr_inv_last')||'0')
   };
 }
 
@@ -1128,12 +1188,12 @@ function getData(){
   return {
     docType, docNo:v('doc-no'), date:v('doc-date'),
     coName:v('co-name'), coAddr:v('co-addr'), coPhone:v('co-phone'), coEmail:v('co-email'), coGST:v('co-gst'),
-    custName:v('cust-name'), custDesc:v('cust-desc'), custAddr:v('cust-addr'), custDist:v('cust-dist'), custGST:v('cust-gst'),
+    custName:v('cust-name'), custPhone:v('cust-phone'), custDesc:v('cust-desc'), custAddr:v('cust-addr'), custDist:v('cust-dist'), custGST:v('cust-gst'),
     noteTax:v('note-tax'), noteDelivery:v('note-delivery'), noteTransport:v('note-transport'),
     notes:v('notes'), terms:v('terms'),
     bankName:v('bank-name'), bankGST:v('bank-gst'), bankAcc:v('bank-acc'),
     bankIFSC:v('bank-ifsc'), bankBank:v('bank-bank'), bankBranch:v('bank-branch'),
-    rows, sub, transport, tax, total:taxable+tax, gstRate,
+    rows, sub, transport, tax, total:taxable+tax, grandTotal:taxable+tax, gstRate,
     sealEnabled:document.getElementById('tog-seal').checked, sealDataUrl
   };
 }
@@ -1249,13 +1309,23 @@ function showPreview(){
   document.getElementById('modal').style.display='block';
 }
 
-function generatePDF(){
+async function generatePDF(){
   const d=getData();
-  // Auto-increment invoice number on download
+  // Invoice number — auto use field value, only increment counter if > last saved
   if(d.docType==='invoice'){
-    const newNo = incrementInvNo();
-    document.getElementById('doc-no').value = newNo;
-    d.docNo = newNo;
+    const fieldVal = document.getElementById('doc-no').value.trim();
+    const usedNo = fieldVal ? fieldVal.padStart(3,'0') : getLastInvNo();
+    const usedInt = parseInt(usedNo);
+    const lastInt = parseInt(localStorage.getItem('avr_inv_last')||'0');
+    // Only update counter if used number > last saved
+    if(usedInt > lastInt){
+      localStorage.setItem('avr_inv_last', usedInt);
+      const s = collectSettings(); s.lastInvNo = usedInt;
+      saveSettingsCloud(s);
+    }
+    document.getElementById('doc-no').value = usedNo;
+    d.docNo = usedNo;
+    updateLastInvDisplay();
   }
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:'mm',format:'a4'});
@@ -1465,6 +1535,10 @@ function generatePDF(){
 
   const fn=(d.docType==='invoice'?'Invoice_':'Estimate_')+(d.docNo||d.date)+'_'+(d.custName||'Customer').replace(/\s+/g,'_')+'.pdf';
   doc.save(fn);
+  // Save to history with current period
+  const now = new Date();
+  const currentPeriod = localStorage.getItem('avr_current_period') || now.toLocaleString('en-IN',{month:'short',year:'numeric'});
+  saveToHistory(d, currentPeriod);
 }
 
 function resetForm(){
@@ -1472,6 +1546,258 @@ function resetForm(){
   document.getElementById('prod-list').innerHTML='';
   rowId=0; addRow(); updateSummary();
 }
+
+// ── Invoice/Estimate History ───────────────────────────────────────────────
+const GH_HISTORY_FILE = 'invoices.json';
+const GH_HISTORY_API  = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_HISTORY_FILE}`;
+const GH_HISTORY_RAW  = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/${GH_HISTORY_FILE}`;
+
+// ── Auto year reset check ──────────────────────────────────────────────────
+function checkYearReset(){
+  const currentYear = new Date().getFullYear();
+  const savedYear = parseInt(localStorage.getItem('avr_saved_year')||'0');
+  if(savedYear && savedYear < currentYear){
+    // New year! Auto reset counter
+    localStorage.setItem('avr_inv_last', '0');
+    localStorage.setItem('avr_saved_year', currentYear);
+    localStorage.setItem('avr_current_period', 'Jan '+currentYear);
+    const s = collectSettings();
+    s.lastInvNo = 0;
+    s.savedYear = currentYear;
+    saveSettingsCloud(s);
+    updateLastInvDisplay();
+    console.log(`Happy New Year! Counter reset for ${currentYear}`);
+  } else if(!savedYear){
+    localStorage.setItem('avr_saved_year', currentYear);
+  }
+}
+
+async function saveToHistory(d, period){
+  const currentYear = new Date().getFullYear();
+  const entry = {
+    id: Date.now(),
+    year: currentYear,
+    period: period || String(currentYear),
+    docType: d.docType,
+    docNo: d.docNo||'',
+    date: d.date,
+    custName: d.custName,
+    custPhone: d.custPhone||'',
+    custAddr: d.custAddr||'',
+    custDist: d.custDist||'',
+    custGST: d.custGST||'',
+    custDesc: d.custDesc||'',
+    gstRate: d.gstRate,
+    notes: d.notes||'',
+    noteDelivery: d.noteDelivery||'',
+    noteTransport: d.noteTransport||'',
+    total: d.grandTotal||0,
+    rows: d.rows||[],
+    savedAt: new Date().toISOString()
+  };
+
+  let history = await loadHistory();
+  history.unshift(entry);
+  localStorage.setItem('avr_history', JSON.stringify(history));
+  // Badge shows current year count
+  const thisYearCount = history.filter(h => h.year === currentYear).length;
+  updateHistBadge(thisYearCount);
+
+  // Save to GitHub
+  const token = getToken();
+  if(!token) return;
+  try {
+    const headers = { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' };
+    let sha = null;
+    const check = await fetch(GH_HISTORY_API, { headers });
+    if(check.ok){ const ex = await check.json(); sha = ex.sha; }
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(history, null, 2))));
+    const body = { message: `Add ${entry.docType} ${entry.docNo||entry.date} (${entry.period})`, content };
+    if(sha) body.sha = sha;
+    await fetch(GH_HISTORY_API, { method:'PUT', headers, body: JSON.stringify(body) });
+  } catch(e) {}
+}
+
+async function loadHistory(){
+  try {
+    const res = await fetch(GH_HISTORY_RAW + '?t=' + Date.now());
+    if(res.ok){
+      const data = await res.json();
+      localStorage.setItem('avr_history', JSON.stringify(data));
+      return data;
+    }
+  } catch(e) {}
+  const local = localStorage.getItem('avr_history');
+  return local ? JSON.parse(local) : [];
+}
+
+function updateHistBadge(count){
+  const badge = document.getElementById('hist-count');
+  if(!badge) return;
+  if(count > 0){ badge.textContent = count; badge.style.display='inline'; }
+  else { badge.style.display='none'; }
+}
+
+function renderHistoryRows(history, selectedYear){
+  const filtered = history.filter(h => (h.year||new Date(h.savedAt).getFullYear()) === selectedYear);
+  if(filtered.length === 0) return `<div style="padding:40px;text-align:center;color:#aaa;">
+    <div style="font-size:2rem;margin-bottom:10px">📭</div>
+    <div style="font-size:0.88rem">No documents for ${selectedYear}.</div>
+  </div>`;
+
+  return filtered.map((h, i) => {
+    const globalIndex = history.indexOf(h);
+    const isInv = h.docType==='invoice';
+    const amt = Number(h.total||0).toLocaleString('en-IN',{minimumFractionDigits:2});
+    const dt = new Date(h.savedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    return `<div style="padding:13px 16px;border-bottom:1px solid #e8f2e8;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <!-- Type + No -->
+        <div style="flex-shrink:0;text-align:center;min-width:44px;">
+          <div style="font-size:0.6rem;font-weight:700;color:${isInv?'#3d6b45':'#e67e22'};background:${isInv?'#e8f5e8':'#fef0e0'};padding:2px 5px;border-radius:4px;margin-bottom:3px;">${isInv?'INV':'EST'}</div>
+          <div style="font-size:0.95rem;font-weight:700;color:#111;font-family:'Courier New',monospace;">${h.docNo||'—'}</div>
+        </div>
+        <!-- Main info -->
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.85rem;font-weight:600;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.custName||'—'}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:3px;">
+            ${h.custDesc?`<span style="font-size:0.68rem;color:#5a7a5a;background:#f0f7f0;padding:1px 6px;border-radius:4px;">${h.custDesc}</span>`:''}
+            ${h.custDist?`<span style="font-size:0.68rem;color:#5a7a5a;background:#f0f7f0;padding:1px 6px;border-radius:4px;">📍${h.custDist}</span>`:''}
+          </div>
+          <div style="font-size:0.68rem;color:#aaa;margin-top:3px;">📅 ${dt}</div>
+        </div>
+        <!-- Amount + Restore -->
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:0.85rem;font-weight:700;color:#3d6b45;font-family:'Courier New',monospace;">₹${amt}</div>
+          <button onclick="restoreHistory(${globalIndex})" style="margin-top:5px;padding:5px 12px;background:#3d6b45;color:white;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
+            ↩ Restore
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openHistory(){
+  const existing = document.getElementById('hist-drawer');
+  if(existing){ existing.remove(); return; }
+
+  const history = await loadHistory();
+  const currentYear = new Date().getFullYear();
+
+  // Get unique years from history
+  const years = [...new Set(history.map(h => h.year || new Date(h.savedAt).getFullYear()))].sort((a,b)=>b-a);
+  if(!years.includes(currentYear)) years.unshift(currentYear);
+
+  window._historyData = history;
+  window._histSelectedYear = currentYear;
+
+  const thisYearCount = history.filter(h=>(h.year||new Date(h.savedAt).getFullYear())===currentYear).length;
+  updateHistBadge(thisYearCount);
+
+  const drawer = document.createElement('div');
+  drawer.id = 'hist-drawer';
+  drawer.style.cssText = 'position:fixed;top:0;right:0;width:480px;max-width:100vw;height:100vh;background:white;box-shadow:-8px 0 40px rgba(0,0,0,0.2);z-index:8000;display:flex;flex-direction:column;font-family:Inter,sans-serif;';
+
+  const yearOptions = years.map(y =>
+    `<option value="${y}" ${y===currentYear?'selected':''}>${y}</option>`
+  ).join('');
+
+  const filteredCount = history.filter(h=>(h.year||new Date(h.savedAt).getFullYear())===currentYear).length;
+
+  drawer.innerHTML = `
+    <div style="background:linear-gradient(135deg,#2d4a32,#3d6b45);padding:14px 16px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-family:Poppins,sans-serif;font-size:1rem;font-weight:700;color:white;">📋 Document History</div>
+        <button onclick="document.getElementById('hist-drawer').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1.1rem;">×</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <select id="hist-year-sel" onchange="
+          window._histSelectedYear=parseInt(this.value);
+          const cnt=window._historyData.filter(h=>(h.year||new Date(h.savedAt).getFullYear())===window._histSelectedYear).length;
+          document.getElementById('hist-doc-count').textContent=cnt+' document'+(cnt!==1?'s':'');
+          document.getElementById('hist-rows').innerHTML=renderHistoryRows(window._historyData,window._histSelectedYear);
+        " style="padding:5px 10px;border-radius:7px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:white;font-size:0.82rem;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;">
+          ${yearOptions}
+        </select>
+        <span id="hist-doc-count" style="font-size:0.72rem;color:rgba(255,255,255,0.75);">${filteredCount} document${filteredCount!==1?'s':''}</span>
+      </div>
+    </div>
+    <div id="hist-rows" style="flex:1;overflow-y:auto;">${renderHistoryRows(history, currentYear)}</div>
+    <div style="padding:12px 16px;border-top:1px solid #e8f2e8;flex-shrink:0;">
+      <button onclick="if(confirm('Clear ALL history including previous years?')){localStorage.removeItem('avr_history');window._historyData=[];document.getElementById('hist-rows').innerHTML=renderHistoryRows([],window._histSelectedYear);document.getElementById('hist-doc-count').textContent='0 documents';updateHistBadge(0);}" style="width:100%;padding:8px;background:white;color:#e74c3c;border:1.5px solid #e74c3c;border-radius:8px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">
+        🗑 Clear All History
+      </button>
+    </div>`;
+
+  document.body.appendChild(drawer);
+
+  setTimeout(()=>{
+    document.addEventListener('click', function closeDrawer(e){
+      const dr = document.getElementById('hist-drawer');
+      if(dr && !dr.contains(e.target) && !e.target.closest('[onclick*="openHistory"]')){
+        dr.remove();
+        document.removeEventListener('click', closeDrawer);
+      }
+    });
+  }, 100);
+}
+
+function restoreHistory(index){
+  const h = window._historyData[index];
+  if(!h) return;
+
+  setType(h.docType);
+
+  const set = (id,val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
+  set('doc-date', h.date);
+  set('cust-name', h.custName);
+  set('cust-phone', h.custPhone);
+  set('cust-addr', h.custAddr);
+  set('cust-dist', h.custDist);
+  set('cust-gst', h.custGST);
+  set('cust-desc', h.custDesc);
+  set('notes', h.notes);
+  set('note-delivery', h.noteDelivery);
+  set('note-transport', h.noteTransport);
+
+  if(h.docType==='invoice'){
+    set('doc-no', h.docNo||'');
+    updateLastInvDisplay();
+  }
+
+  if(h.gstRate !== undefined){
+    const chips = document.querySelectorAll('.gst-chip');
+    chips.forEach(chip => {
+      chip.classList.remove('active');
+      if(parseFloat(chip.textContent)===h.gstRate || (h.gstRate===0 && chip.textContent.includes('Exempt'))){
+        chip.classList.add('active');
+      }
+    });
+    gstRate = h.gstRate;
+  }
+
+  if(h.rows && h.rows.length){
+    document.getElementById('prod-list').innerHTML='';
+    rowId=0;
+    h.rows.forEach(r => addRow(r.desc, r.size, r.unit, r.qty, r.rate));
+  }
+  updateSummary();
+
+  const dr = document.getElementById('hist-drawer');
+  if(dr) dr.remove();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── Startup: check year reset + load history badge ─────────────────────────
+(async()=>{
+  checkYearReset();
+  const h = await loadHistory();
+  const currentYear = new Date().getFullYear();
+  const thisYearCount = h.filter(hh=>(hh.year||new Date(hh.savedAt).getFullYear())===currentYear).length;
+  updateHistBadge(thisYearCount);
+  window._historyData = h;
+})();
 </script>
 </body>
 </html>
