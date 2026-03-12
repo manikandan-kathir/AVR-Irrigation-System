@@ -1751,7 +1751,7 @@ async function openHistory(){
     </div>
     <div id="hist-rows" style="flex:1;overflow-y:auto;">${renderHistoryRows(history, currentYear)}</div>
     <div style="padding:12px 16px;border-top:1px solid #e8f2e8;flex-shrink:0;">
-      <button onclick="if(confirm('Clear ALL history including previous years?')){localStorage.removeItem('avr_history');window._historyData=[];document.getElementById('hist-rows').innerHTML=renderHistoryRows([],window._histSelectedYear);document.getElementById('hist-doc-count').textContent='0 documents';updateHistBadge(0);}" style="width:100%;padding:8px;background:white;color:#e74c3c;border:1.5px solid #e74c3c;border-radius:8px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">
+      <button onclick="showClearHistoryConfirm()" style="width:100%;padding:8px;background:white;color:#e74c3c;border:1.5px solid #e74c3c;border-radius:8px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">
         🗑 Clear All History
       </button>
     </div>`;
@@ -1824,6 +1824,78 @@ function restoreHistory(index){
   updateHistBadge(thisYearCount);
   window._historyData = h;
 })();
+
+function showClearHistoryConfirm(){
+  // Remove existing if any
+  const ex = document.getElementById('clear-hist-confirm');
+  if(ex) ex.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'clear-hist-confirm';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9500;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:28px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:Inter,sans-serif;text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">⚠️</div>
+      <div style="font-family:Poppins,sans-serif;font-size:1rem;font-weight:700;color:#e74c3c;margin-bottom:8px;">Clear All History?</div>
+      <div style="font-size:0.82rem;color:#555;margin-bottom:6px;line-height:1.6;">
+        This will permanently delete <b>all invoices &amp; estimates</b> from GitHub and this device.
+      </div>
+      <div style="font-size:0.75rem;color:#e74c3c;background:#fff5f5;border:1px solid #fcc;border-radius:8px;padding:8px;margin-bottom:20px;">
+        ⛔ This cannot be undone!
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="document.getElementById('clear-hist-confirm').remove()" 
+          style="flex:1;padding:10px;background:#f5f5f5;color:#333;border:1.5px solid #ddd;border-radius:9px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">
+          Cancel
+        </button>
+        <button onclick="clearAllHistory()" 
+          style="flex:1;padding:10px;background:#e74c3c;color:white;border:none;border-radius:9px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
+          Yes, Clear All
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function clearAllHistory(){
+  // Close confirm dialog
+  const confirm = document.getElementById('clear-hist-confirm');
+  if(confirm) confirm.remove();
+
+  // Show clearing status in drawer footer
+  const btn = document.querySelector('#hist-drawer button[onclick*="showClearHistoryConfirm"]');
+  if(btn){ btn.textContent = '⏳ Clearing...'; btn.disabled = true; }
+
+  // Clear localStorage
+  localStorage.removeItem('avr_history');
+  localStorage.removeItem('avr_current_period');
+  window._historyData = [];
+
+  // Delete invoices.json from GitHub
+  const token = getToken();
+  if(token){
+    try {
+      const headers = { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' };
+      const check = await fetch(GH_HISTORY_API, { headers });
+      if(check.ok){
+        const ex = await check.json();
+        await fetch(GH_HISTORY_API, {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({ message: 'Clear all history', sha: ex.sha })
+        });
+      }
+    } catch(e) { console.warn('GitHub delete failed', e); }
+  }
+
+  // Update UI
+  updateHistBadge(0);
+  const rows = document.getElementById('hist-rows');
+  if(rows) rows.innerHTML = renderHistoryRows([], window._histSelectedYear||new Date().getFullYear());
+  const count = document.getElementById('hist-doc-count');
+  if(count) count.textContent = '0 documents';
+  if(btn){ btn.textContent = '✅ History Cleared!'; btn.style.color='#3d6b45'; btn.style.borderColor='#3d6b45'; }
+}
 </script>
 </body>
 </html>
