@@ -1591,7 +1591,7 @@ async function saveToHistory(d, period){
     docType: d.docType,
     docNo: d.docNo||'',
     date: d.date,
-    custName: d.custName,
+    custName: d.custName||'',
     custPhone: d.custPhone||'',
     custAddr: d.custAddr||'',
     custDist: d.custDist||'',
@@ -1606,14 +1606,18 @@ async function saveToHistory(d, period){
     savedAt: new Date().toISOString()
   };
 
-  let history = await loadHistory();
+  // Use localStorage as source of truth (fast, no network delay)
+  const local = localStorage.getItem('avr_history');
+  let history = local ? JSON.parse(local) : [];
   history.unshift(entry);
   localStorage.setItem('avr_history', JSON.stringify(history));
-  // Badge shows current year count
+
+  // Update badge immediately
   const thisYearCount = history.filter(h => h.year === currentYear).length;
   updateHistBadge(thisYearCount);
+  window._historyData = history;
 
-  // Save to GitHub
+  // Save to GitHub in background (non-blocking)
   const token = getToken();
   if(!token) return;
   try {
@@ -1621,24 +1625,36 @@ async function saveToHistory(d, period){
     let sha = null;
     const check = await fetch(GH_HISTORY_API, { headers });
     if(check.ok){ const ex = await check.json(); sha = ex.sha; }
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(history, null, 2))));
+    // Use TextEncoder for safe Unicode encoding
+    const jsonStr = JSON.stringify(history, null, 2);
+    const bytes = new TextEncoder().encode(jsonStr);
+    let binary = '';
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    const content = btoa(binary);
     const body = { message: `Add ${entry.docType} ${entry.docNo||entry.date} (${entry.period})`, content };
     if(sha) body.sha = sha;
     await fetch(GH_HISTORY_API, { method:'PUT', headers, body: JSON.stringify(body) });
-  } catch(e) {}
+  } catch(e) { console.warn('History GitHub sync failed, saved locally', e); }
 }
 
 async function loadHistory(){
+  // Return localStorage immediately (fast)
+  const local = localStorage.getItem('avr_history');
+  const localData = local ? JSON.parse(local) : [];
+
+  // Sync from GitHub in background and update if newer
   try {
     const res = await fetch(GH_HISTORY_RAW + '?t=' + Date.now());
     if(res.ok){
-      const data = await res.json();
-      localStorage.setItem('avr_history', JSON.stringify(data));
-      return data;
+      const ghData = await res.json();
+      // Use GitHub data if it has more entries (another device added some)
+      if(Array.isArray(ghData) && ghData.length >= localData.length){
+        localStorage.setItem('avr_history', JSON.stringify(ghData));
+        return ghData;
+      }
     }
   } catch(e) {}
-  const local = localStorage.getItem('avr_history');
-  return local ? JSON.parse(local) : [];
+  return localData;
 }
 
 function updateHistBadge(count){
