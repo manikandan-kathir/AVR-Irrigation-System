@@ -431,7 +431,7 @@ Tamil Nadu.</textarea>
       </div>
       <div class="grid-3">
         <div><label>Phone</label><input id="co-phone" type="tel" value="+91-9345678978" disabled oninput="this.value=this.value.replace(/[^0-9+\s\-()]/g,'')"></div>
-        <div><label>Email</label><input id="co-email" type="email" value="mail.com" disabled onblur="if(this.value && !this.value.includes('@')){alert('Please enter a valid email address');this.focus();}"></div>
+        <div><label>Email</label><input id="co-email" value="mail.com" disabled oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._%+\-]/g,'')"></div>
         <div><label>Website (optional)</label><input id="co-web" placeholder="www.example.com" disabled></div>
       </div>
     </div>
@@ -727,12 +727,22 @@ function setType(t){
 
 function toggleCoEdit(cb){
   const badge=document.getElementById('co-badge');
+  // Validate email before locking
+  if(!cb.checked){
+    const emailVal = document.getElementById('co-email').value.trim();
+    if(emailVal && (!emailVal.includes('@') || !emailVal.includes('.'))){
+      document.getElementById('co-email').style.border='2px solid #e74c3c';
+      document.getElementById('co-email').title='Please enter a valid email';
+      cb.checked = true; // keep toggle open
+      return;
+    }
+    document.getElementById('co-email').style.border='';
+  }
   document.querySelectorAll('#co-fields input,#co-fields select,#co-fields textarea')
     .forEach(el=>el.disabled=!cb.checked);
   badge.className='lock-badge '+(cb.checked?'unlocked':'locked');
   badge.textContent=cb.checked?'🔓 Editable':'🔒 Locked';
   if(!cb.checked){
-    // Locking — save to GitHub
     badge.textContent='💾 Saving...';
     saveSettingsCloud(collectSettings()).then(()=>{
       badge.textContent='🔒 Locked';
