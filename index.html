@@ -1388,22 +1388,31 @@ function showPreview(){
         ${d.notes?`<br>${d.notes}`:''}
       </div>
       <hr style="margin-bottom:6px">
-      <div style="display:flex;gap:1rem;font-size:0.78rem;margin-bottom:10px">
-        <div style="flex:1">
-          <b>Terms &amp; Conditions</b><br>
+      <div style="display:flex;gap:0;font-size:0.78rem;margin-bottom:10px;border:1px solid #e0ede0;border-radius:6px;overflow:hidden">
+        <!-- LEFT: Terms -->
+        <div style="flex:1;padding:10px 12px;">
+          <b>Terms &amp; Conditions</b>
           <div style="white-space:pre-line;margin-top:4px;line-height:1.7">${d.terms}</div>
         </div>
-        ${d.sealEnabled&&d.sealDataUrl?`<div style="width:160px;text-align:center;border-left:1px solid #eee;padding-left:12px">
-          <img src="${d.sealDataUrl}" style="max-height:80px;max-width:140px;object-fit:contain">
-          <div style="border-top:1px solid #000;margin-top:32px;padding-top:4px;font-size:0.72rem">Authorized Signatory</div>
-        </div>`:''}
-      </div>
-      <hr style="margin-bottom:6px">
-      <div style="font-size:0.78rem;margin-bottom:8px">
-        <b>Company's Bank Details</b><br>
-        Name : ${d.bankName}<br>GST NO : ${d.bankGST}<br>
-        ACC NO : ${d.bankAcc}<br>IFSC Code : ${d.bankIFSC}<br>
-        Bank Name : ${d.bankBank}<br>Branch : ${d.bankBranch}
+        <!-- RIGHT: Seal + Auth + Bank — always shown -->
+        <div style="width:175px;min-width:175px;border-left:1px solid #c8dfc8;display:flex;flex-direction:column;">
+          <!-- Seal area -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:10px 8px 6px;">
+            ${d.sealEnabled&&d.sealDataUrl?`<img src="${d.sealDataUrl}" style="max-height:80px;max-width:150px;object-fit:contain;margin-bottom:6px">`:
+            `<div style="height:60px"></div>`}
+            <div style="text-align:center;font-size:0.72rem"><span style="border-top:1px solid #333;display:inline-block;padding-top:4px;min-width:100px;">Authorized Signatory</span></div>
+          </div>
+          <!-- Bank details -->
+          <div style="border-top:1px solid #c8dfc8;padding:8px;font-size:0.72rem;line-height:1.7;background:#f8fcf8;">
+            <b style="display:block;margin-bottom:3px;font-size:0.75rem">Company's Bank Details</b>
+            ${d.bankName?`Name : ${d.bankName}<br>`:''}
+            ${d.bankGST?`GST NO : ${d.bankGST}<br>`:''}
+            ${d.bankAcc?`ACC NO : ${d.bankAcc}<br>`:''}
+            ${d.bankIFSC?`IFSC Code : ${d.bankIFSC}<br>`:''}
+            ${d.bankBank?`Bank Name : ${d.bankBank}<br>`:''}
+            ${d.bankBranch?`Branch : ${d.bankBranch}`:''}
+          </div>
+        </div>
       </div>
       <div style="text-align:center;font-size:0.78rem;color:#888">
         ***This is a system generated ${isInv?'Invoice':'Estimate'}***
