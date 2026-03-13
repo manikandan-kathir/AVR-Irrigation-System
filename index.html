@@ -141,27 +141,27 @@ input:disabled, select:disabled, textarea:disabled {
 /* Summary */
 .summary-wrap { display: flex; justify-content: flex-end; margin-top: 1.2rem; padding-right: 44px; }
 .summary-box {
-  width: 420px; border: 1px solid #b8d8b8; border-radius: 8px;
-  overflow: hidden; font-size: 0.88rem; table-layout: fixed;
+  width: 323px; border: 1px solid #b8d8b8; border-radius: 8px;
+  overflow: hidden; font-size: 0.88rem;
 }
 .sum-row {
   display: flex; border-bottom: 1px solid #b8d8b8;
 }
 .sum-row:last-child { border-bottom: none; }
 .sum-lbl {
-  width: 200px; min-width: 200px; max-width: 200px;
-  padding: 9px 14px; font-weight: 600; background: #f0f8f0;
+  width: 175px; min-width: 175px; max-width: 175px;
+  padding: 9px 12px; font-weight: 600; background: #f0f8f0;
   border-right: 1px solid #b8d8b8; color: #111111; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
 }
 .sum-amount {
-  flex: 1;
-  padding: 9px 14px;
+  width: 148px; min-width: 148px;
+  padding: 9px 12px;
   background: #fff;
   font-family: 'Courier New', monospace;
   font-variant-numeric: tabular-nums;
   color: #2d5a2d; white-space: nowrap;
-  text-align: right;
+  display: flex; gap: 4px;
 }
 .sum-row.grand .sum-amount {
   background: #3d6b45; color: #fff; font-weight: 700; font-size: 0.95rem;
@@ -174,6 +174,10 @@ input:disabled, select:disabled, textarea:disabled {
   background: #3d6b45; color: #fff; font-weight: 700; font-size: 0.95rem;
   font-family: 'Courier New', monospace; text-align: left;
 }
+
+/* History filter buttons */
+.hf-btn { padding:4px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;transition:all 0.15s; }
+.hf-btn.hf-active { background:white !important;color:#3d6b45 !important;border-color:white !important; }
 
 /* GST chips */
 .gst-chips { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -342,7 +346,11 @@ input:checked + .slider:before { transform: translateX(22px); }
   #excel-upload-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
   #excel-upload-bar label { width: 100%; text-align: center; box-sizing: border-box; }
 
-  /* GST chips */
+  /* History filter buttons */
+.hf-btn { padding:4px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;transition:all 0.15s; }
+.hf-btn.hf-active { background:white !important;color:#3d6b45 !important;border-color:white !important; }
+
+/* GST chips */
   .gst-chips { gap: 6px; }
   .gst-chip { padding: 5px 10px; font-size: 0.78rem; }
 
@@ -538,11 +546,11 @@ Tamil Nadu.</textarea>
         </div>
       </div>
     </div>
-    <div class="summary-box" style="width:320px">
-      <div class="sum-row"><div class="sum-lbl">Transportation Charges</div><div class="sum-amount" id="s-transport">&#8377; 0.00</div></div>
-      <div class="sum-row"><div class="sum-lbl">Sub Total</div><div class="sum-amount" id="s-sub">&#8377; 0.00</div></div>
-      <div class="sum-row"><div class="sum-lbl" id="s-tax-lbl">Taxes (18.00%)</div><div class="sum-amount" id="s-tax">&#8377; 0.00</div></div>
-      <div class="sum-row grand"><div class="sum-lbl">GRAND TOTAL</div><div class="sum-amount" id="s-total">&#8377; 0.00</div></div>
+    <div class="summary-box">
+      <div class="sum-row"><div class="sum-lbl">Transportation Charges</div><div class="sum-amount" id="s-transport"><span style="flex-shrink:0">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
+      <div class="sum-row"><div class="sum-lbl">Sub Total</div><div class="sum-amount" id="s-sub"><span style="flex-shrink:0">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
+      <div class="sum-row"><div class="sum-lbl" id="s-tax-lbl">Taxes (18.00%)</div><div class="sum-amount" id="s-tax"><span style="flex-shrink:0">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
+      <div class="sum-row grand"><div class="sum-lbl">GRAND TOTAL</div><div class="sum-amount" id="s-total"><span style="flex-shrink:0">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
     </div>
   </div>
 </div>
@@ -1156,14 +1164,15 @@ function updateSummary(){
   const tr=getTransport();
   const firstQty=parseFloat(document.querySelector('.prod-row')?.querySelectorAll('input[type="number"]')[0]?.value)||0;
   const taxable=sub+tr, tax=taxable*gstRate/100, total=taxable+tax;
-  const f=n=>'\u20B9 '+n.toLocaleString('en-IN',{minimumFractionDigits:2});
-  document.getElementById('s-transport').textContent=f(tr);
-  document.getElementById('s-sub').textContent=f(sub);
+  const f=n=>`<span style='flex-shrink:0'>&#8377;</span><span style='flex:1;text-align:right'>${n.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>`;
+  const fp=n=>'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2});
+  document.getElementById('s-transport').innerHTML=f(tr);
+  document.getElementById('s-sub').innerHTML=f(sub);
   document.getElementById('s-tax-lbl').textContent=`Taxes (${gstRate}.00%)`;
-  document.getElementById('s-tax').textContent=f(tax);
-  document.getElementById('s-total').textContent=f(total);
+  document.getElementById('s-tax').innerHTML=f(tax);
+  document.getElementById('s-total').innerHTML=f(total);
   document.getElementById('tr-qty').textContent=firstQty;
-  document.getElementById('tr-amt').textContent=f(tr);
+  document.getElementById('tr-amt').textContent=fp(tr);
 }
 
 function toggleSeal(cb){
@@ -1804,18 +1813,9 @@ async function openHistory(){
       </div>
       <!-- Type filter tabs -->
       <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <button id="hf-all" onclick="window._histTypeFilter='all';document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('hf-active'));this.classList.add('hf-active');applyHistFilter();"
-          class="hf-btn hf-active" style="padding:4px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.5);background:white;color:#3d6b45;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
-          All
-        </button>
-        <button id="hf-inv" onclick="window._histTypeFilter='inv';document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('hf-active'));this.classList.add('hf-active');applyHistFilter();"
-          class="hf-btn" style="padding:4px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
-          🧾 INV
-        </button>
-        <button id="hf-est" onclick="window._histTypeFilter='est';document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('hf-active'));this.classList.add('hf-active');applyHistFilter();"
-          class="hf-btn" style="padding:4px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
-          📋 EST
-        </button>
+        <button id="hf-all" onclick="window._histTypeFilter='all';document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('hf-active'));this.classList.add('hf-active');applyHistFilter();" class="hf-btn hf-active">All</button>
+        <button id="hf-inv" onclick="window._histTypeFilter='inv';document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('hf-active'));this.classList.add('hf-active');applyHistFilter();" class="hf-btn">🧾 INV</button>
+        <button id="hf-est" onclick="window._histTypeFilter='est';document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('hf-active'));this.classList.add('hf-active');applyHistFilter();" class="hf-btn">📋 EST</button>
       </div>
       <!-- Search box -->
       <div style="position:relative;">
