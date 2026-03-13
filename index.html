@@ -1255,19 +1255,16 @@ function toggleSeal(cb){
   }
 }
 
-function urlToBase64(url){
+async function urlToBase64(url){
+  // Fetch image as blob then convert to base64
+  const rawUrl = url.replace('?raw=true','').replace('/blob/','/raw/').replace('github.com','raw.githubusercontent.com') + '?t=' + Date.now();
+  const response = await fetch(rawUrl);
+  const blob = await response.blob();
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = function(){
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext('2d').drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
-    };
-    img.onerror = reject;
-    img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
   });
 }
 
@@ -1604,36 +1601,63 @@ async function generatePDF(){
 
   doc.setTextColor(0);doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=4;
 
-  // Terms + Seal — terms wraps
-  const tColW=d.sealEnabled&&d.sealDataUrl?118:W-2*M;
+  // ── 2-Column layout: Terms (left) | Seal + Bank (right) ─────────────────
+  // Right column is always reserved regardless of seal on/off
+  const rColW = 68;           // right column width (mm)
+  const rColX = W - M - rColW; // right column start X
+  const tColW = rColX - M - 4; // left (terms) column width
+  const divX  = rColX - 2;     // divider line X
+
+  // Vertical divider line
+  const sectionStartY = y;
+  doc.setDrawColor(200);doc.setLineWidth(0.2);
+
+  // LEFT: Terms & Conditions
   doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(0);
-  sl('Terms & Conditions',M,y);y+=5;
+  sl('Terms & Conditions', M, y); y+=5;
   doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(40);
-  const tLines=doc.splitTextToSize(d.terms,tColW);
-  doc.text(tLines,M,y);
-  const tEndY=y+tLines.length*4;
-  if(d.sealEnabled&&d.sealDataUrl){
+  const tLines = doc.splitTextToSize(d.terms, tColW);
+  doc.text(tLines, M, y);
+  const tEndY = y + tLines.length * 4;
+
+  // RIGHT: Seal + Authorized Signatory
+  let rY = sectionStartY;
+  if(d.sealEnabled && d.sealDataUrl){
     try{
-      doc.addImage(d.sealDataUrl,'PNG',W-M-52,y-4,52,42);
-      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(0);
-      sl('_______________________',W-M-54,y+40);
-      sl('Authorized Signatory',W-M-48,y+45);
+      const sealW = 46, sealH = 36;
+      const sealImgX = rColX + (rColW - sealW) / 2; // center in right col
+      doc.addImage(d.sealDataUrl, 'PNG', sealImgX, rY, sealW, sealH);
+      rY += sealH + 3;
     }catch(e){}
+  } else {
+    rY += 20; // space placeholder when no seal
   }
-  y=Math.max(tEndY,y+48)+4;
+  // Authorized signatory line always shown
+  doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(0);
+  doc.setLineWidth(0.3);doc.setDrawColor(0);
+  doc.line(rColX, rY, W-M, rY); rY += 4;
+  sl('Authorized Signatory', rColX + (rColW/2), rY, {align:'center'}); rY += 8;
 
-  function chk(n=20){if(y+n>280){doc.addPage();y=15;}}
+  // Divider between seal and bank in right col
+  doc.setLineWidth(0.2);doc.setDrawColor(180);
+  doc.line(rColX, rY, W-M, rY); rY += 4;
 
-  // Bank details — all single line
-  chk(40);
-  doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=5;
-  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(0);
-  sl("Company's Bank Details",M,y);y+=5;
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(40);
+  // RIGHT: Bank Details
+  doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(0);
+  sl("Company's Bank Details", rColX + (rColW/2), rY, {align:'center'}); rY += 5;
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(40);
   [['Name',d.bankName],['GST NO',d.bankGST],['ACC NO',d.bankAcc],
    ['IFSC Code',d.bankIFSC],['Bank Name',d.bankBank],['Branch',d.bankBranch]]
-    .forEach(([l2,v2])=>{if(v2){sl(l2+' : '+v2,M,y);y+=4.5;}});
-  y+=3;
+    .forEach(([l2,v2])=>{ if(v2){ sl(l2+' : '+v2, rColX+2, rY); rY+=4; } });
+
+  // Vertical divider line spanning full section height
+  const sectionEndY = Math.max(tEndY, rY) + 2;
+  doc.setDrawColor(200);doc.setLineWidth(0.2);
+  doc.line(divX, sectionStartY - 2, divX, sectionEndY);
+
+  y = sectionEndY + 3;
+
+  function chk(n=20){if(y+n>285){doc.addPage();y=15;}}
 
   chk(10);
   doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(120);
