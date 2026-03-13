@@ -114,7 +114,7 @@ input:disabled, select:disabled, textarea:disabled {
   font-weight: 600; color: #2d5a2d; font-size: 0.88rem;
   padding: 7px 8px; background: #e8f5e8; border-radius: 6px;
   white-space: nowrap; font-family: 'Courier New', monospace;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums; text-align: right;
 }
 .btn-del {
   width: 32px; height: 32px; border: none; background: #fde8e8;
@@ -139,25 +139,29 @@ input:disabled, select:disabled, textarea:disabled {
 }
 
 /* Summary */
-.summary-wrap { display: flex; justify-content: flex-end; margin-top: 1.2rem; }
+.summary-wrap { display: flex; justify-content: flex-end; margin-top: 1.2rem; padding-right: 44px; }
 .summary-box {
   width: 420px; border: 1px solid #b8d8b8; border-radius: 8px;
-  overflow: hidden; font-size: 0.88rem;
+  overflow: hidden; font-size: 0.88rem; table-layout: fixed;
 }
 .sum-row {
   display: flex; border-bottom: 1px solid #b8d8b8;
 }
 .sum-row:last-child { border-bottom: none; }
 .sum-lbl {
-  flex: 1; padding: 9px 14px; font-weight: 600; background: #f0f8f0;
+  width: 200px; min-width: 200px; max-width: 200px;
+  padding: 9px 14px; font-weight: 600; background: #f0f8f0;
   border-right: 1px solid #b8d8b8; color: #111111; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
 }
 .sum-amount {
-  width: 160px; padding: 9px 14px;
+  flex: 1;
+  padding: 9px 14px;
   background: #fff;
   font-family: 'Courier New', monospace;
   font-variant-numeric: tabular-nums;
   color: #2d5a2d; white-space: nowrap;
+  text-align: right;
 }
 .sum-row.grand .sum-amount {
   background: #3d6b45; color: #fff; font-weight: 700; font-size: 0.95rem;
@@ -168,7 +172,7 @@ input:disabled, select:disabled, textarea:disabled {
 }
 .sum-row.grand .sum-amount {
   background: #3d6b45; color: #fff; font-weight: 700; font-size: 0.95rem;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', monospace; text-align: left;
 }
 
 /* GST chips */
@@ -1609,6 +1613,29 @@ async function saveToHistory(d, period){
   // Use localStorage as source of truth (fast, no network delay)
   const local = localStorage.getItem('avr_history');
   let history = local ? JSON.parse(local) : [];
+
+  // Handle duplicate invoice/estimate number versioning
+  if(entry.docNo && entry.docType === 'invoice'){
+    const baseNo = entry.docNo.replace('_old','');
+    // Find existing entries with same base number (current year)
+    const existingIdx = history.findIndex(h =>
+      h.docType === 'invoice' &&
+      h.year === currentYear &&
+      (h.docNo === baseNo) // only match the latest (non-_old)
+    );
+    if(existingIdx !== -1){
+      // Remove any existing _old version first (keep only 1 old)
+      const oldIdx = history.findIndex(h =>
+        h.docType === 'invoice' &&
+        h.year === currentYear &&
+        h.docNo === baseNo + '_old'
+      );
+      if(oldIdx !== -1) history.splice(oldIdx, 1);
+      // Tag existing latest as _old
+      history[existingIdx].docNo = baseNo + '_old';
+    }
+  }
+
   history.unshift(entry);
   localStorage.setItem('avr_history', JSON.stringify(history));
 
@@ -1664,28 +1691,48 @@ function updateHistBadge(count){
   else { badge.style.display='none'; }
 }
 
-function renderHistoryRows(history, selectedYear){
-  const filtered = history.filter(h => (h.year||new Date(h.savedAt).getFullYear()) === selectedYear);
+function renderHistoryRows(history, selectedYear, typeFilter, searchQuery){
+  typeFilter = typeFilter || 'all';
+  searchQuery = (searchQuery || '').toLowerCase().trim();
+
+  let filtered = history.filter(h => (h.year||new Date(h.savedAt).getFullYear()) === selectedYear);
+
+  // Type filter
+  if(typeFilter === 'inv') filtered = filtered.filter(h => h.docType === 'invoice');
+  else if(typeFilter === 'est') filtered = filtered.filter(h => h.docType === 'estimate');
+
+  // Search filter — name, invoice no, district, project
+  if(searchQuery){
+    filtered = filtered.filter(h =>
+      (h.custName||'').toLowerCase().includes(searchQuery) ||
+      (h.docNo||'').toLowerCase().includes(searchQuery) ||
+      (h.custDist||'').toLowerCase().includes(searchQuery) ||
+      (h.custDesc||'').toLowerCase().includes(searchQuery)
+    );
+  }
+
   if(filtered.length === 0) return `<div style="padding:40px;text-align:center;color:#aaa;">
     <div style="font-size:2rem;margin-bottom:10px">📭</div>
-    <div style="font-size:0.88rem">No documents for ${selectedYear}.</div>
+    <div style="font-size:0.88rem">${searchQuery||typeFilter!=='all' ? 'No results found.' : 'No documents for '+selectedYear+'.'}</div>
   </div>`;
 
-  return filtered.map((h, i) => {
+  return filtered.map((h) => {
     const globalIndex = history.indexOf(h);
     const isInv = h.docType==='invoice';
+    const isOld = (h.docNo||'').includes('_old');
     const amt = Number(h.total||0).toLocaleString('en-IN',{minimumFractionDigits:2});
     const dt = new Date(h.savedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-    return `<div style="padding:13px 16px;border-bottom:1px solid #e8f2e8;">
+    return `<div style="padding:13px 16px;border-bottom:1px solid #e8f2e8;${isOld?'background:#fffbf0;':''}">
       <div style="display:flex;align-items:center;gap:10px;">
         <!-- Type + No -->
-        <div style="flex-shrink:0;text-align:center;min-width:44px;">
+        <div style="flex-shrink:0;text-align:center;min-width:52px;">
           <div style="font-size:0.6rem;font-weight:700;color:${isInv?'#3d6b45':'#e67e22'};background:${isInv?'#e8f5e8':'#fef0e0'};padding:2px 5px;border-radius:4px;margin-bottom:3px;">${isInv?'INV':'EST'}</div>
-          <div style="font-size:0.95rem;font-weight:700;color:#111;font-family:'Courier New',monospace;">${h.docNo||'—'}</div>
+          <div style="font-size:0.85rem;font-weight:700;color:${isOld?'#aaa':'#111'};font-family:'Courier New',monospace;">${h.docNo||'—'}</div>
+          ${isOld?'<div style="font-size:0.55rem;color:#e67e22;font-weight:700;">PREV</div>':''}
         </div>
         <!-- Main info -->
         <div style="flex:1;min-width:0;">
-          <div style="font-size:0.85rem;font-weight:600;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.custName||'—'}</div>
+          <div style="font-size:0.85rem;font-weight:600;color:${isOld?'#999':'#111'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.custName||'—'}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:3px;">
             ${h.custDesc?`<span style="font-size:0.68rem;color:#5a7a5a;background:#f0f7f0;padding:1px 6px;border-radius:4px;">${h.custDesc}</span>`:''}
             ${h.custDist?`<span style="font-size:0.68rem;color:#5a7a5a;background:#f0f7f0;padding:1px 6px;border-radius:4px;">📍${h.custDist}</span>`:''}
@@ -1694,14 +1741,21 @@ function renderHistoryRows(history, selectedYear){
         </div>
         <!-- Amount + Restore -->
         <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:0.85rem;font-weight:700;color:#3d6b45;font-family:'Courier New',monospace;">₹${amt}</div>
-          <button onclick="restoreHistory(${globalIndex})" style="margin-top:5px;padding:5px 12px;background:#3d6b45;color:white;border:none;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
+          <div style="font-size:0.85rem;font-weight:700;color:${isOld?'#aaa':'#3d6b45'};font-family:'Courier New',monospace;">₹${amt}</div>
+          <button onclick="restoreHistory(${globalIndex})" style="margin-top:5px;padding:5px 12px;background:${isOld?'#f5f5f5':'#3d6b45'};color:${isOld?'#666':'white'};border:${isOld?'1.5px solid #ddd':'none'};border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
             ↩ Restore
           </button>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+function applyHistFilter(){
+  const year = window._histSelectedYear || new Date().getFullYear();
+  const type = window._histTypeFilter || 'all';
+  const q = document.getElementById('hist-search')?.value || '';
+  document.getElementById('hist-rows').innerHTML = renderHistoryRows(window._historyData, year, type, q);
 }
 
 async function openHistory(){
@@ -1717,6 +1771,7 @@ async function openHistory(){
 
   window._historyData = history;
   window._histSelectedYear = currentYear;
+  window._histTypeFilter = 'all';
 
   const thisYearCount = history.filter(h=>(h.year||new Date(h.savedAt).getFullYear())===currentYear).length;
   updateHistBadge(thisYearCount);
@@ -1737,19 +1792,41 @@ async function openHistory(){
         <div style="font-family:Poppins,sans-serif;font-size:1rem;font-weight:700;color:white;">📋 Document History</div>
         <button onclick="document.getElementById('hist-drawer').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1.1rem;">×</button>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;">
+      <!-- Year + count row -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <select id="hist-year-sel" onchange="
           window._histSelectedYear=parseInt(this.value);
-          const cnt=window._historyData.filter(h=>(h.year||new Date(h.savedAt).getFullYear())===window._histSelectedYear).length;
-          document.getElementById('hist-doc-count').textContent=cnt+' document'+(cnt!==1?'s':'');
-          document.getElementById('hist-rows').innerHTML=renderHistoryRows(window._historyData,window._histSelectedYear);
+          applyHistFilter();
         " style="padding:5px 10px;border-radius:7px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:white;font-size:0.82rem;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;">
           ${yearOptions}
         </select>
         <span id="hist-doc-count" style="font-size:0.72rem;color:rgba(255,255,255,0.75);">${filteredCount} document${filteredCount!==1?'s':''}</span>
       </div>
+      <!-- Type filter tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button id="hf-all" onclick="window._histTypeFilter='all';document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('hf-active'));this.classList.add('hf-active');applyHistFilter();"
+          class="hf-btn hf-active" style="padding:4px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.5);background:white;color:#3d6b45;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
+          All
+        </button>
+        <button id="hf-inv" onclick="window._histTypeFilter='inv';document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('hf-active'));this.classList.add('hf-active');applyHistFilter();"
+          class="hf-btn" style="padding:4px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
+          🧾 INV
+        </button>
+        <button id="hf-est" onclick="window._histTypeFilter='est';document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('hf-active'));this.classList.add('hf-active');applyHistFilter();"
+          class="hf-btn" style="padding:4px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
+          📋 EST
+        </button>
+      </div>
+      <!-- Search box -->
+      <div style="position:relative;">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.6);font-size:0.85rem;">🔍</span>
+        <input id="hist-search" type="text" placeholder="Search name, number, district..."
+          oninput="applyHistFilter()"
+          style="width:100%;padding:7px 10px 7px 30px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:white;font-size:0.78rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;"
+          onfocus="this.style.background='rgba(255,255,255,0.25)'" onblur="this.style.background='rgba(255,255,255,0.15)'">
+      </div>
     </div>
-    <div id="hist-rows" style="flex:1;overflow-y:auto;">${renderHistoryRows(history, currentYear)}</div>
+    <div id="hist-rows" style="flex:1;overflow-y:auto;">${renderHistoryRows(history, currentYear, 'all', '')}</div>
     <div style="padding:12px 16px;border-top:1px solid #e8f2e8;flex-shrink:0;">
       <button onclick="showClearHistoryConfirm()" style="width:100%;padding:8px;background:white;color:#e74c3c;border:1.5px solid #e74c3c;border-radius:8px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">
         🗑 Clear All History
