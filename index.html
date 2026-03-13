@@ -1392,11 +1392,11 @@ function showPreview(){
           <div style="white-space:pre-line;margin-top:4px;line-height:1.7">${d.terms}</div>
         </div>
         <!-- RIGHT: Seal + Auth + Bank — always shown -->
-        <div style="width:175px;min-width:175px;border-left:1px solid #c8dfc8;display:flex;flex-direction:column;">
+        <div style="width:185px;min-width:185px;border-left:1px solid #c8dfc8;display:flex;flex-direction:column;">
           <!-- Seal area -->
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:10px 8px 6px;">
-            ${d.sealEnabled&&d.sealDataUrl?`<img src="${d.sealDataUrl}" style="max-height:80px;max-width:150px;object-fit:contain;margin-bottom:6px">`:
-            `<div style="height:60px"></div>`}
+            ${d.sealEnabled&&d.sealDataUrl?`<img src="${d.sealDataUrl}" style="height:48px;width:160px;object-fit:contain;margin-bottom:6px">`:
+            `<div style="height:48px"></div>`}
             <div style="text-align:center;font-size:0.72rem"><span style="border-top:1px solid #555;display:inline-block;padding-top:4px;padding-left:8px;padding-right:8px;">Authorized Signatory</span></div>
           </div>
           <!-- Bank details -->
@@ -1608,15 +1608,13 @@ async function generatePDF(){
   doc.setTextColor(0);doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=4;
 
   // ── 2-Column layout: Terms (left) | Seal + Bank (right) ─────────────────
-  // Right column is always reserved regardless of seal on/off
-  const rColW = 68;           // right column width (mm)
-  const rColX = W - M - rColW; // right column start X
-  const tColW = rColX - M - 4; // left (terms) column width
-  const divX  = rColX - 2;     // divider line X
-
-  // Vertical divider line
+  const SEAL_W = 56, SEAL_H = 18;   // exact seal size: 5.63cm x 1.69cm
+  const SEAL_RESERVED = SEAL_H + 10; // always reserve this height for seal area
+  const rColW = 62;                  // right column width (mm) — wider than seal
+  const rColX = W - M - rColW;
+  const tColW = rColX - M - 4;
+  const divX  = rColX - 2;
   const sectionStartY = y;
-  doc.setDrawColor(200);doc.setLineWidth(0.2);
 
   // LEFT: Terms & Conditions
   doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(0);
@@ -1626,26 +1624,25 @@ async function generatePDF(){
   doc.text(tLines, M, y);
   const tEndY = y + tLines.length * 4;
 
-  // RIGHT: Seal + Authorized Signatory
+  // RIGHT: Seal area — always same reserved height
   let rY = sectionStartY;
   if(d.sealEnabled && d.sealDataUrl){
     try{
-      const sealW = 46, sealH = 36;
-      const sealImgX = rColX + (rColW - sealW) / 2; // center in right col
-      doc.addImage(d.sealDataUrl, 'PNG', sealImgX, rY, sealW, sealH);
-      rY += sealH + 3;
+      const sealImgX = rColX + (rColW - SEAL_W) / 2;
+      doc.addImage(d.sealDataUrl, 'PNG', sealImgX, rY, SEAL_W, SEAL_H);
     }catch(e){}
-  } else {
-    rY += 20; // space placeholder when no seal
   }
-  // Authorized signatory line always shown
+  rY += SEAL_RESERVED; // always advance same amount whether seal on or off
+
+  // Authorized Signatory — always shown
   doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(0);
   doc.setLineWidth(0.3);doc.setDrawColor(0);
-  doc.line(rColX, rY, W-M, rY); rY += 4;
+  const sigW = 38;
+  doc.line(rColX + (rColW-sigW)/2, rY, rColX + (rColW+sigW)/2, rY); rY += 4;
   sl('Authorized Signatory', rColX + (rColW/2), rY, {align:'center'}); rY += 8;
 
-  // Divider between seal and bank in right col
-  doc.setLineWidth(0.2);doc.setDrawColor(180);
+  // Divider before bank — dark black
+  doc.setLineWidth(0.5);doc.setDrawColor(0);
   doc.line(rColX, rY, W-M, rY); rY += 4;
 
   // RIGHT: Bank Details
@@ -1656,7 +1653,7 @@ async function generatePDF(){
    ['IFSC Code',d.bankIFSC],['Bank Name',d.bankBank],['Branch',d.bankBranch]]
     .forEach(([l2,v2])=>{ if(v2){ sl(l2+' : '+v2, rColX+2, rY); rY+=4; } });
 
-  // Vertical divider line spanning full section height
+  // Vertical divider line
   const sectionEndY = Math.max(tEndY, rY) + 2;
   doc.setDrawColor(200);doc.setLineWidth(0.2);
   doc.line(divX, sectionStartY - 2, divX, sectionEndY);
