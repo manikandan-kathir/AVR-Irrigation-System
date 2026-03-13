@@ -114,8 +114,11 @@ input:disabled, select:disabled, textarea:disabled {
   font-weight: 600; color: #2d5a2d; font-size: 0.88rem;
   padding: 7px 8px; background: #e8f5e8; border-radius: 6px;
   white-space: nowrap; font-family: 'Courier New', monospace;
-  font-variant-numeric: tabular-nums; text-align: right;
+  font-variant-numeric: tabular-nums;
+  display: flex; align-items: center; gap: 4px;
 }
+.amt-cell .amt-sym { flex-shrink: 0; width: 14px; }
+.amt-cell .amt-num { flex: 1; text-align: right; }
 .btn-del {
   width: 32px; height: 32px; border: none; background: #fde8e8;
   color: var(--danger); border-radius: 7px; cursor: pointer; font-size: 1rem;
@@ -530,10 +533,41 @@ Tamil Nadu.</textarea>
   <div style="display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:start;margin-top:1rem;padding-top:1rem;border-top:2px solid var(--border)">
     <div>
       <div class="transport-info" style="margin-top:0">
-        🚚 <strong style="color:var(--accent)">Transportation Charges:</strong>
-        <span style="color:var(--muted)">₹10 × <strong id="tr-qty" style="color:var(--text)">0</strong> qty (1st item) =</span>
-        <strong style="color:var(--primary)" id="tr-amt">₹0.00</strong>
-        <span style="font-size:0.75rem;color:var(--muted)">(auto-calculated)</span>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span>🚚 <strong style="color:var(--accent)">Transportation Charges</strong></span>
+          <label class="toggle" style="margin:0"><input type="checkbox" id="tog-transport" onchange="toggleTransportEdit(this)"><span class="slider"></span></label>
+          <span style="font-size:0.75rem;color:var(--muted)" id="tr-edit-label">Edit</span>
+        </div>
+        <div id="tr-auto" style="margin-top:6px;">
+          <span style="color:var(--muted)">₹10 × <strong id="tr-qty" style="color:var(--text)">0</strong> qty (1st item) =</span>
+          <strong style="color:var(--primary)" id="tr-amt">₹0.00</strong>
+          <span style="font-size:0.75rem;color:var(--muted)">(auto-calculated)</span>
+        </div>
+        <div id="tr-manual" style="display:none;margin-top:8px;">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:3px;">Rate per Qty (₹)</label>
+              <input id="tr-rate-input" type="number" value="10" min="0"
+                style="width:100px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:0.85rem;"
+                oninput="updateSummary()">
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:3px;">Qty Override</label>
+              <input id="tr-qty-input" type="number" placeholder="Auto from 1st item" min="0"
+                style="width:140px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:0.85rem;"
+                oninput="updateSummary()">
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:3px;">Or Fixed Amount (₹)</label>
+              <input id="tr-fixed-input" type="number" placeholder="Override total" min="0"
+                style="width:140px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:0.85rem;"
+                oninput="updateSummary()">
+            </div>
+          </div>
+          <div style="margin-top:6px;font-size:0.78rem;color:var(--muted)">
+            Result: <strong style="color:var(--primary)" id="tr-amt-manual">₹0.00</strong>
+          </div>
+        </div>
       </div>
       <div style="margin-top:1rem">
         <label style="margin-bottom:8px;display:block">Tax Rate</label>
@@ -1060,7 +1094,7 @@ function addRow(desc='',size='',unit='Sq mtr',qty=1,rate=0){
     <select oninput="updateSummary()">${UNITS.map(u=>`<option${u===unit?' selected':''}>${u}</option>`).join('')}</select>
     <input type="number" min="0" step="0.01" value="${qty}" oninput="calcAmt(this)">
     <input type="number" min="0" step="0.01" value="${rate}" placeholder="0.00" oninput="calcAmt(this)">
-    <div class="amt-cell" id="amt-${id}">&#8377; ${(qty*rate).toLocaleString('en-IN',{minimumFractionDigits:2})}</div>
+    <div class="amt-cell" id="amt-${id}"><span class='amt-sym'>&#8377;</span><span class='amt-num'>${(qty*rate).toLocaleString('en-IN',{minimumFractionDigits:2})}</span></div>
     <button class="btn-del" onclick="delRow('pr-${id}')">✕</button>
   `;
   document.getElementById('prod-list').appendChild(div);
@@ -1137,7 +1171,7 @@ function calcAmt(inp){
   const ns=row.querySelectorAll('input[type="number"]');
   const qty=parseFloat(ns[0].value)||0, rate=parseFloat(ns[1].value)||0;
   const amtCell = row.querySelector('.amt-cell');
-  amtCell.textContent='\u20B9 '+(qty*rate).toLocaleString('en-IN',{minimumFractionDigits:2});
+  amtCell.innerHTML=`<span class='amt-sym'>&#8377;</span><span class='amt-num'>${(qty*rate).toLocaleString('en-IN',{minimumFractionDigits:2})}</span>`;
   updateSummary();
 }
 
@@ -1150,9 +1184,42 @@ function renumber(){
 }
 
 function getTransport(){
+  if(document.getElementById('tog-transport')?.checked){
+    const fixedVal = document.getElementById('tr-fixed-input')?.value.trim();
+    // Fixed amount — only if field has actual content
+    if(fixedVal !== '' && fixedVal !== undefined){
+      const fixed = parseFloat(fixedVal);
+      if(!isNaN(fixed) && fixed >= 0) return fixed;
+    }
+    // Rate × qty
+    const rate = parseFloat(document.getElementById('tr-rate-input')?.value) || 10;
+    const qtyVal = document.getElementById('tr-qty-input')?.value.trim();
+    if(qtyVal !== '' && qtyVal !== undefined){
+      const qtyOverride = parseFloat(qtyVal);
+      if(!isNaN(qtyOverride) && qtyOverride >= 0) return rate * qtyOverride;
+    }
+    // Rate × first row qty (fallback)
+    const fr=document.querySelector('.prod-row'); if(!fr) return 0;
+    const qty=parseFloat(fr.querySelectorAll('input[type="number"]')[0]?.value)||0;
+    return rate * qty;
+  }
+  // Auto mode
   const fr=document.querySelector('.prod-row'); if(!fr) return 0;
   const qty=parseFloat(fr.querySelectorAll('input[type="number"]')[0]?.value)||0;
   return TRATE*qty;
+}
+
+function toggleTransportEdit(cb){
+  document.getElementById('tr-auto').style.display = cb.checked ? 'none' : '';
+  document.getElementById('tr-manual').style.display = cb.checked ? '' : 'none';
+  document.getElementById('tr-edit-label').textContent = cb.checked ? 'Custom' : 'Edit';
+  if(!cb.checked){
+    // Disabling — clear manual inputs so auto recalculates cleanly
+    document.getElementById('tr-rate-input').value = '10';
+    document.getElementById('tr-qty-input').value = '';
+    document.getElementById('tr-fixed-input').value = '';
+  }
+  updateSummary();
 }
 
 function updateSummary(){
@@ -1173,6 +1240,7 @@ function updateSummary(){
   document.getElementById('s-total').innerHTML=f(total);
   document.getElementById('tr-qty').textContent=firstQty;
   document.getElementById('tr-amt').textContent=fp(tr);
+  const trManual=document.getElementById('tr-amt-manual'); if(trManual) trManual.textContent=fp(tr);
 }
 
 function toggleSeal(cb){
