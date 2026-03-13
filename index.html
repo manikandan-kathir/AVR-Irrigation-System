@@ -669,18 +669,13 @@ Payment Terms
         <span class="toggle-label">Attach Seal on PDF</span>
       </div>
     </div>
-    <div id="seal-sec" style="display:none">
-      <div class="upload-area" onclick="document.getElementById('seal-file').click()">
-        <input type="file" id="seal-file" accept="image/*" style="display:none" onchange="loadSeal(this)">
-        <div id="seal-preview">
-          <p style="font-size:1.5rem;margin-bottom:4px">🖼️</p>
-          <p>Click to upload company seal image</p>
-          <p style="font-size:0.75rem;margin-top:4px">PNG or JPG — appears bottom-right on PDF</p>
-        </div>
-      </div>
+    <div id="seal-sec" style="display:none;text-align:center;padding:1rem;">
+      <img id="seal-preview-img" src="https://placehold.co/200x200/e8f5e8/3d6b45?text=Company+Seal"
+        style="max-height:120px;max-width:200px;object-fit:contain;border:1.5px dashed #c8dfc8;border-radius:8px;padding:6px;">
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:6px;">Seal will appear bottom-right on PDF</div>
     </div>
-    <div id="seal-placeholder" style="text-align:center;padding:1.5rem;color:var(--muted)">
-      Toggle the switch to enable and upload your company seal image.
+    <div id="seal-placeholder" style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.82rem;">
+      Toggle the switch to attach company seal on PDF.
     </div>
   </div>
 
@@ -708,7 +703,7 @@ Payment Terms
 </div>
 
 <script>
-let docType='estimate', gstRate=18, sealDataUrl=null, rowId=0;
+let docType='estimate', gstRate=18, sealDataUrl='https://placehold.co/200x200/e8f5e8/3d6b45?text=Company+Seal', rowId=0;
 let productDB = []; // loaded from Excel
 const TRATE=10;
 const UNITS=['Sq mtr','Meter','Pcs','Kg','Liters','Set','Roll','Box','Nos','Lump Sum'];
@@ -1243,20 +1238,14 @@ function updateSummary(){
   const trManual=document.getElementById('tr-amt-manual'); if(trManual) trManual.textContent=fp(tr);
 }
 
+const SEAL_URL = 'https://github.com/manikandan-kathir/AVR-Irrigation-System/blob/main/AVR_IRRIGATION_SYSTEM_SEAL.png?raw=true'; // ← Replace with your real image URL
 function toggleSeal(cb){
-  document.getElementById('seal-sec').style.display=cb.checked?'':'none';
-  document.getElementById('seal-placeholder').style.display=cb.checked?'none':'';
+  document.getElementById('seal-sec').style.display = cb.checked ? '' : 'none';
+  document.getElementById('seal-placeholder').style.display = cb.checked ? 'none' : '';
+  sealDataUrl = cb.checked ? SEAL_URL : null;
 }
 
-function loadSeal(inp){
-  const file=inp.files[0]; if(!file) return;
-  const r=new FileReader();
-  r.onload=e=>{
-    sealDataUrl=e.target.result;
-    document.getElementById('seal-preview').innerHTML=`<img src="${sealDataUrl}" style="max-height:90px;max-width:220px;object-fit:contain">`;
-  };
-  r.readAsDataURL(file);
-}
+// loadSeal removed — seal uses URL directly
 
 function v(id){ return document.getElementById(id)?.value||''; }
 function fmt(n){ return '₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2}); }
