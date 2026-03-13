@@ -1317,11 +1317,11 @@ function showPreview(){
         </div>
         <div style="font-size:0.8rem;text-align:right">Date: ${d.date}${isInv?'<br>Invoice No: '+d.docNo:''}</div>
       </div>
-      <hr style="margin-bottom:8px">
-      <div style="text-align:center;margin-bottom:10px">
-        <span style="display:inline-block;border:1.5px solid #222;padding:5px 40px;font-weight:700;background:#f5f5f5;letter-spacing:2px">${docLabel}</span>
+      <hr style="margin:4px 0">
+      <div style="text-align:center;margin:4px 0">
+        <span style="display:inline-block;border:1.5px solid #222;padding:3px 40px;font-weight:700;background:#f5f5f5;letter-spacing:2px">${docLabel}</span>
       </div>
-      <hr style="margin-bottom:10px">
+      <hr style="margin:4px 0 8px 0">
       <div style="font-size:0.82rem;margin-bottom:12px;line-height:2">
         <div><span style="display:inline-block;width:170px">Name of the Customer</span>: ${d.custName||''}</div>
         <div><span style="display:inline-block;width:170px">Address</span>: ${(d.custAddr||'').replace(/\n/g,' ')}</div>
@@ -1379,16 +1379,13 @@ function showPreview(){
           </tr>
         </table>
       </div>
-      <hr style="margin-bottom:6px">
-      <div style="font-size:0.78rem;margin-bottom:8px">
+      <hr style="margin-bottom:4px">
+      <div style="font-size:0.78rem;margin-bottom:4px">
         <b>Notes:</b><br>
-        <span style="color:#c85000">Applicable Taxes : ${d.noteTax}<br>
-        Delivery Period : ${d.noteDelivery}<br>
-        Transportation Charges : ${d.noteTransport}</span>
-        ${d.notes?`<br>${d.notes}`:''}
+        <span style="color:#c85000">Applicable Taxes : ${d.noteTax}<br>Delivery Period : ${d.noteDelivery}<br>Transportation Charges : ${d.noteTransport}</span>${d.notes?`<br>${d.notes}`:''}
       </div>
-      <hr style="margin-bottom:6px">
-      <div style="display:flex;gap:0;font-size:0.78rem;margin-bottom:10px;border:1px solid #e0ede0;border-radius:6px;overflow:hidden">
+      <hr style="margin-bottom:4px;border-color:#333;border-width:1.5px">
+      <div style="display:flex;gap:0;font-size:0.78rem;margin-bottom:4px;border:1px solid #e0ede0;border-radius:6px;overflow:hidden">
         <!-- LEFT: Terms -->
         <div style="flex:1;padding:10px 12px;">
           <b>Terms &amp; Conditions</b>
@@ -1400,10 +1397,10 @@ function showPreview(){
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:10px 8px 6px;">
             ${d.sealEnabled&&d.sealDataUrl?`<img src="${d.sealDataUrl}" style="max-height:80px;max-width:150px;object-fit:contain;margin-bottom:6px">`:
             `<div style="height:60px"></div>`}
-            <div style="text-align:center;font-size:0.72rem"><span style="border-top:1px solid #333;display:inline-block;padding-top:4px;min-width:100px;">Authorized Signatory</span></div>
+            <div style="text-align:center;font-size:0.72rem"><span style="border-top:1px solid #555;display:inline-block;padding-top:4px;padding-left:8px;padding-right:8px;">Authorized Signatory</span></div>
           </div>
           <!-- Bank details -->
-          <div style="border-top:1px solid #c8dfc8;padding:8px;font-size:0.72rem;line-height:1.7;background:#f8fcf8;">
+          <div style="border-top:2px solid #000;padding:8px;font-size:0.72rem;line-height:1.7;background:#f8fcf8;">
             <b style="display:block;margin-bottom:3px;font-size:0.75rem">Company's Bank Details</b>
             ${d.bankName?`Name : ${d.bankName}<br>`:''}
             ${d.bankGST?`GST NO : ${d.bankGST}<br>`:''}
