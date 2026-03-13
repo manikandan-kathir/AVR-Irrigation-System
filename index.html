@@ -1463,17 +1463,17 @@ async function generatePDF(){
   if(d.docType==='invoice') sl('Invoice No: '+d.docNo,W-M,y+7,{align:'right'});
   y=offY+8;
 
-  doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=5;
+  doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=3;
 
   // ESTIMATE/TAX INVOICE box
   const lbl=d.docType==='invoice'?'TAX INVOICE':'ESTIMATE';
   doc.setFontSize(13);doc.setFont('helvetica','bold');
-  const lW=54,lH=9,lX=(W-lW)/2;
+  const lW=54,lH=8,lX=(W-lW)/2;
   doc.setFillColor(245,245,245);doc.rect(lX,y-1,lW,lH,'FD');
-  sl(lbl,W/2,y+5.5,{align:'center'});
-  y+=lH+5;
+  sl(lbl,W/2,y+4.5,{align:'center'});
+  y+=lH+3;
 
-  doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=5;
+  doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=4;
 
   // Customer — single line each except address which wraps
   doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(0);
@@ -1505,8 +1505,8 @@ async function generatePDF(){
     {w:24, align:'center', head:'Size'},
     {w:16, align:'center', head:'Unit'},
     {w:12, align:'right',  head:'Qty'},
-    {w:36, align:'right',  head:'Rate (Rs)'},
-    {w:38, align:'right',  head:'Amount (Rs)'},
+    {w:36, align:'right',  head:'Rate (₹)'},
+    {w:38, align:'right',  head:'Amount (₹)'},
   ];
   // calculate auto width for description
   const fixedW = cols.reduce((s,c)=>s+c.w,0);
@@ -1532,7 +1532,7 @@ async function generatePDF(){
         const rsX = c.x + 4;
         doc.setFont('helvetica', bold?'bold':'normal');
         doc.setTextColor(...(textColor||[0,0,0]));
-        doc.text('Rs. ' + txt, rsX, ty);
+        doc.text('₹ ' + txt, rsX, ty);
       } else if(c.align==='center'){
         doc.text(txt, c.x+c.w/2, ty, {align:'center'});
       } else if(c.align==='right'){
@@ -1583,7 +1583,7 @@ async function generatePDF(){
     doc.text(lbl, sumX+3, y+5);
     // Rs. + number together, left-aligned in value area
     doc.setFont('helvetica', isBold?'bold':'normal');
-    doc.text('Rs. ' + val.toLocaleString('en-IN',{minimumFractionDigits:2}), sumX+lblW+3, y+5);
+    doc.text('₹ ' + val.toLocaleString('en-IN',{minimumFractionDigits:2}), sumX+lblW+3, y+5);
     y+=rH;
   });
   y+=6;
