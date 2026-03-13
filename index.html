@@ -141,7 +141,7 @@ input:disabled, select:disabled, textarea:disabled {
 /* Summary */
 .summary-wrap { display: flex; justify-content: flex-end; margin-top: 1.2rem; padding-right: 44px; }
 .summary-box {
-  width: 323px; border: 1px solid #b8d8b8; border-radius: 8px;
+  width: 400px; border: 1px solid #b8d8b8; border-radius: 8px;
   overflow: hidden; font-size: 0.88rem;
 }
 .sum-row {
@@ -149,19 +149,19 @@ input:disabled, select:disabled, textarea:disabled {
 }
 .sum-row:last-child { border-bottom: none; }
 .sum-lbl {
-  width: 175px; min-width: 175px; max-width: 175px;
+  width: 200px; min-width: 200px; max-width: 200px;
   padding: 9px 12px; font-weight: 600; background: #f0f8f0;
   border-right: 1px solid #b8d8b8; color: #111111; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis;
+  overflow: visible; text-overflow: clip;
 }
 .sum-amount {
-  width: 148px; min-width: 148px;
+  flex: 1;
   padding: 9px 12px;
   background: #fff;
   font-family: 'Courier New', monospace;
   font-variant-numeric: tabular-nums;
   color: #2d5a2d; white-space: nowrap;
-  display: flex; gap: 4px;
+  display: flex; align-items: center; gap: 6px;
 }
 .sum-row.grand .sum-amount {
   background: #3d6b45; color: #fff; font-weight: 700; font-size: 0.95rem;
@@ -547,10 +547,10 @@ Tamil Nadu.</textarea>
       </div>
     </div>
     <div class="summary-box">
-      <div class="sum-row"><div class="sum-lbl">Transportation Charges</div><div class="sum-amount" id="s-transport"><span style="flex-shrink:0">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
-      <div class="sum-row"><div class="sum-lbl">Sub Total</div><div class="sum-amount" id="s-sub"><span style="flex-shrink:0">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
-      <div class="sum-row"><div class="sum-lbl" id="s-tax-lbl">Taxes (18.00%)</div><div class="sum-amount" id="s-tax"><span style="flex-shrink:0">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
-      <div class="sum-row grand"><div class="sum-lbl">GRAND TOTAL</div><div class="sum-amount" id="s-total"><span style="flex-shrink:0">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
+      <div class="sum-row"><div class="sum-lbl">Transportation Charges</div><div class="sum-amount" id="s-transport"><span style="flex-shrink:0;width:14px;display:inline-block">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
+      <div class="sum-row"><div class="sum-lbl">Sub Total</div><div class="sum-amount" id="s-sub"><span style="flex-shrink:0;width:14px;display:inline-block">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
+      <div class="sum-row"><div class="sum-lbl" id="s-tax-lbl">Taxes (18.00%)</div><div class="sum-amount" id="s-tax"><span style="flex-shrink:0;width:14px;display:inline-block">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
+      <div class="sum-row grand"><div class="sum-lbl">GRAND TOTAL</div><div class="sum-amount" id="s-total"><span style="flex-shrink:0;width:14px;display:inline-block">&#8377;</span><span style="flex:1;text-align:right">0.00</span></div></div>
     </div>
   </div>
 </div>
@@ -1164,7 +1164,7 @@ function updateSummary(){
   const tr=getTransport();
   const firstQty=parseFloat(document.querySelector('.prod-row')?.querySelectorAll('input[type="number"]')[0]?.value)||0;
   const taxable=sub+tr, tax=taxable*gstRate/100, total=taxable+tax;
-  const f=n=>`<span style='flex-shrink:0'>&#8377;</span><span style='flex:1;text-align:right'>${n.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>`;
+  const f=n=>`<span style='flex-shrink:0;width:14px;display:inline-block'>&#8377;</span><span style='flex:1;text-align:right'>${n.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>`;
   const fp=n=>'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2});
   document.getElementById('s-transport').innerHTML=f(tr);
   document.getElementById('s-sub').innerHTML=f(sub);
