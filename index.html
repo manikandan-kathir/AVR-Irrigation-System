@@ -1505,8 +1505,8 @@ async function generatePDF(){
     {w:24, align:'center', head:'Size'},
     {w:16, align:'center', head:'Unit'},
     {w:12, align:'right',  head:'Qty'},
-    {w:36, align:'right',  head:'Rate (Rs.)'},
-    {w:38, align:'right',  head:'Amount (Rs.)'},
+    {w:36, align:'right',  head:'Rate (Rs)'},
+    {w:38, align:'right',  head:'Amount (Rs)'},
   ];
   // calculate auto width for description
   const fixedW = cols.reduce((s,c)=>s+c.w,0);
@@ -1532,7 +1532,7 @@ async function generatePDF(){
         const rsX = c.x + 4;
         doc.setFont('helvetica', bold?'bold':'normal');
         doc.setTextColor(...(textColor||[0,0,0]));
-        doc.text('Rs.' + txt, rsX, ty);
+        doc.text('Rs. ' + txt, rsX, ty);
       } else if(c.align==='center'){
         doc.text(txt, c.x+c.w/2, ty, {align:'center'});
       } else if(c.align==='right'){
@@ -1583,7 +1583,7 @@ async function generatePDF(){
     doc.text(lbl, sumX+3, y+5);
     // Rs. + number together, left-aligned in value area
     doc.setFont('helvetica', isBold?'bold':'normal');
-    doc.text('Rs.' + val.toLocaleString('en-IN',{minimumFractionDigits:2}), sumX+lblW+3, y+5);
+    doc.text('Rs. ' + val.toLocaleString('en-IN',{minimumFractionDigits:2}), sumX+lblW+3, y+5);
     y+=rH;
   });
   y+=6;
