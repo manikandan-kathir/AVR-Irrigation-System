@@ -670,7 +670,7 @@ Payment Terms
       </div>
     </div>
     <div id="seal-sec" style="display:none;text-align:center;padding:1rem;">
-      <img id="seal-preview-img" src="https://placehold.co/200x200/e8f5e8/3d6b45?text=Company+Seal"
+      <img id="seal-preview-img" src="https://github.com/manikandan-kathir/AVR-Irrigation-System/blob/main/AVR_SEAL.png?raw=true"
         style="max-height:120px;max-width:200px;object-fit:contain;border:1.5px dashed #c8dfc8;border-radius:8px;padding:6px;">
       <div style="font-size:0.72rem;color:var(--muted);margin-top:6px;">Seal will appear bottom-right on PDF</div>
     </div>
@@ -703,7 +703,7 @@ Payment Terms
 </div>
 
 <script>
-let docType='estimate', gstRate=18, sealDataUrl='https://placehold.co/200x200/e8f5e8/3d6b45?text=Company+Seal', rowId=0;
+let docType='estimate', gstRate=18, sealDataUrl='https://github.com/manikandan-kathir/AVR-Irrigation-System/blob/main/AVR_SEAL.png?raw=true', rowId=0;
 let productDB = []; // loaded from Excel
 const TRATE=10;
 const UNITS=['Sq mtr','Meter','Pcs','Kg','Liters','Set','Roll','Box','Nos','Lump Sum'];
@@ -1238,11 +1238,37 @@ function updateSummary(){
   const trManual=document.getElementById('tr-amt-manual'); if(trManual) trManual.textContent=fp(tr);
 }
 
-const SEAL_URL = 'https://github.com/manikandan-kathir/AVR-Irrigation-System/blob/main/AVR_IRRIGATION_SYSTEM_SEAL.png?raw=true'; // ← Replace with your real image URL
+const SEAL_URL = 'https://github.com/manikandan-kathir/AVR-Irrigation-System/blob/main/AVR_IRRIGATION_SYSTEM_SEAL.png?raw=true';
 function toggleSeal(cb){
   document.getElementById('seal-sec').style.display = cb.checked ? '' : 'none';
   document.getElementById('seal-placeholder').style.display = cb.checked ? 'none' : '';
-  sealDataUrl = cb.checked ? SEAL_URL : null;
+  if(cb.checked){
+    // Convert to base64 for PDF use
+    urlToBase64(SEAL_URL).then(b64 => {
+      sealDataUrl = b64;
+    }).catch(()=>{
+      // Fallback — use URL directly
+      sealDataUrl = SEAL_URL;
+    });
+  } else {
+    sealDataUrl = null;
+  }
+}
+
+function urlToBase64(url){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = reject;
+    img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+  });
 }
 
 // loadSeal removed — seal uses URL directly
