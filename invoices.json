@@ -1,22 +1,22 @@
 [
   {
-    "id": 1773468561865,
+    "id": 1773475589781,
     "year": 2026,
     "period": "Mar 2026",
     "docType": "estimate",
-    "docNo": "",
-    "date": "2026-03-14",
-    "custName": "",
+    "docNo": "003",
+    "date": "2026-03-12",
+    "custName": "Mani Kandan",
     "custPhone": "",
     "custAddr": "",
-    "custDist": "",
+    "custDist": "Cuddalore",
     "custGST": "",
     "custDesc": "",
     "gstRate": 18,
     "notes": "",
     "noteDelivery": "2 DAYS",
     "noteTransport": "Including Door Delivery",
-    "total": 389400,
+    "total": 390934,
     "rows": [
       {
         "no": 1,
@@ -35,9 +35,27 @@
         "qty": 750,
         "rate": 100,
         "amount": 75000
+      },
+      {
+        "no": 3,
+        "desc": "HDPE Pipe",
+        "size": "90 mm x 6 Meter",
+        "unit": "Sq mtr",
+        "qty": 10,
+        "rate": 100,
+        "amount": 1000
+      },
+      {
+        "no": 4,
+        "desc": "Ball Valve",
+        "size": "63 mm",
+        "unit": "Sq mtr",
+        "qty": 5,
+        "rate": 60,
+        "amount": 300
       }
     ],
-    "savedAt": "2026-03-14T06:09:21.865Z"
+    "savedAt": "2026-03-14T08:06:29.781Z"
   },
   {
     "id": 1773455650542,
