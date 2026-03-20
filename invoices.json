@@ -1,6 +1,6 @@
 [
   {
-    "id": 1774021910193,
+    "id": 1774022147701,
     "year": 2026,
     "period": "Mar 2026",
     "docType": "invoice",
@@ -37,21 +37,21 @@
         "amount": 75000
       }
     ],
-    "savedAt": "2026-03-20T15:51:50.193Z"
+    "savedAt": "2026-03-20T15:55:47.701Z"
   },
   {
-    "id": 1774021738950,
+    "id": 1774021910193,
     "year": 2026,
     "period": "Mar 2026",
     "docType": "invoice",
     "docNo": "014_old",
     "date": "2026-03-20",
-    "custName": "",
-    "custPhone": "",
-    "custAddr": "",
-    "custDist": "",
-    "custGST": "",
-    "custDesc": "",
+    "custName": "Manikandan",
+    "custPhone": "+91 7305243051",
+    "custAddr": "Cuddalore",
+    "custDist": "Cuddalore",
+    "custGST": "SDFG345SDFG34SDF",
+    "custDesc": "Sample",
     "gstRate": 18,
     "notes": "",
     "noteDelivery": "2 DAYS",
@@ -77,7 +77,7 @@
         "amount": 75000
       }
     ],
-    "savedAt": "2026-03-20T15:48:58.950Z"
+    "savedAt": "2026-03-20T15:51:50.193Z"
   },
   {
     "id": 1774021715934,
