@@ -1,10 +1,59 @@
 [
   {
-    "id": 1774754790739,
+    "id": 1774754897788,
     "year": 2026,
     "period": "Mar 2026",
     "docType": "invoice",
     "docNo": "029",
+    "date": "2026-03-29",
+    "custName": "",
+    "custPhone": "",
+    "custAddr": "",
+    "custDist": "",
+    "custGST": "",
+    "custDesc": "",
+    "gstRate": 18,
+    "notes": "",
+    "noteDelivery": "2 DAYS",
+    "noteTransport": "Including Door Delivery",
+    "total": 389990,
+    "rows": [
+      {
+        "no": 1,
+        "desc": "GEOTEXTILE 300 GSM (Laying Work)",
+        "size": "2 x 8 Meter",
+        "unit": "Sq mtr",
+        "qty": 750,
+        "rate": 330,
+        "amount": 247500
+      },
+      {
+        "no": 2,
+        "desc": "Old GEOTEXTILE removing work",
+        "size": "2 x 8 Meter",
+        "unit": "Sq mtr",
+        "qty": 750,
+        "rate": 100,
+        "amount": 75000
+      },
+      {
+        "no": 3,
+        "desc": "HDPE Pipe",
+        "size": "63 mm x 6 Meter",
+        "unit": "Sq mtr",
+        "qty": 1,
+        "rate": 500,
+        "amount": 500
+      }
+    ],
+    "savedAt": "2026-03-29T03:28:17.788Z"
+  },
+  {
+    "id": 1774754790739,
+    "year": 2026,
+    "period": "Mar 2026",
+    "docType": "invoice",
+    "docNo": "029_old",
     "date": "2026-03-29",
     "custName": "",
     "custPhone": "",
