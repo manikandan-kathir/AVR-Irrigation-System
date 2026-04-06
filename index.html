@@ -1760,7 +1760,7 @@ function showNormalPreview(){
   document.getElementById('modal').style.display='block';
 }
 
-async function generateCorporatePDF(){
+async function generateCorporatePDF(isConfirmed){
 const d = getData();
  if(!isConfirmed) return; // ✅ stop if not confirmed
 const fieldVal = document.getElementById('doc-no').value.trim();
@@ -2079,7 +2079,7 @@ y += 3;
   saveToHistory(d, currentPeriod);
 }
 
-async function generateNormalPDF(){
+async function generateNormalPDF(isConfirmed){
 const d = getData();
  if(!isConfirmed) return; // ✅ stop if not confirmed
 const fieldVal = document.getElementById('doc-no').value.trim();
