@@ -803,7 +803,7 @@ async function generatePDF(){
 <!-- ACTIONS -->
 <div class="actions">
   <button class="btn btn-outline" onclick="showPreview()">👁 Preview</button>
-  <button class="btn btn-primary" onclick="generatePDF()">⬇️ Download PDF</button>
+  <button class="btn btn-primary" onclick="openDownloadModal()">⬇️ Download PDF</button>
 </div>
 
 </main>
@@ -817,6 +817,46 @@ async function generatePDF(){
       <button class="modal-close" onclick="document.getElementById('modal').style.display='none'">×</button>
     </div>
     <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ✅ Download Confirm Modal -->
+<div id="downloadModal" style="
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.4);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+">
+  <div style="
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    width:300px;
+    text-align:center;
+    box-shadow:0 5px 20px rgba(0,0,0,0.2);
+  ">
+    <div style="font-weight:600;margin-bottom:10px;">
+      Confirm Download
+    </div>
+    <div style="font-size:0.9rem;color:#555;margin-bottom:15px;">
+      Do you want to download this PDF?
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:10px;">
+      <button onclick="confirmDownload(true)"
+        style="padding:6px 12px;background:#4e8a58;color:#fff;border:none;border-radius:6px;cursor:pointer;">
+        Yes
+      </button>
+
+      <button onclick="confirmDownload(false)"
+        style="padding:6px 12px;background:#ccc;border:none;border-radius:6px;cursor:pointer;">
+        Cancel
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1722,7 +1762,7 @@ function showNormalPreview(){
 
 async function generateCorporatePDF(){
 const d = getData();
-
+ if(!isConfirmed) return; // ✅ stop if not confirmed
 const fieldVal = document.getElementById('doc-no').value.trim();
 
 let key = '';
@@ -2041,7 +2081,7 @@ y += 3;
 
 async function generateNormalPDF(){
 const d = getData();
-
+ if(!isConfirmed) return; // ✅ stop if not confirmed
 const fieldVal = document.getElementById('doc-no').value.trim();
 
 let key = '';
@@ -2364,6 +2404,28 @@ doc.text(
   const currentPeriod = localStorage.getItem('avr_current_period') || now.toLocaleString('en-IN',{month:'short',year:'numeric'});
   saveToHistory(d, currentPeriod);
 }
+
+let allowDownload = false;
+
+function openDownloadModal(){
+  document.getElementById('downloadModal').style.display = 'flex';
+}
+
+function confirmDownload(val){
+  document.getElementById('downloadModal').style.display = 'none';
+
+  if(!val) return; // ❌ cancel → do nothing
+
+  const selected = document.querySelector('input[name="template"]:checked');
+  const template = selected ? selected.value : 'normal';
+
+  if(template === 'normal'){
+    generateNormalPDF(true); // ✅ pass confirm flag
+  }else{
+    generateCorporatePDF(true); // ✅ pass confirm flag
+  }
+}
+
 
 function resetForm(){
   if(!confirm('Reset all fields?')) return;
