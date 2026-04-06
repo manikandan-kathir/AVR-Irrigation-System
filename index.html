@@ -835,6 +835,50 @@ updateSummary();
 
 function getDocKey(){ return docType==='invoice' ? 'avr_inv_last' : 'avr_est_last'; }
 
+function getLastEstNo(){
+  const saved = parseInt(localStorage.getItem('avr_est_last') || '0');
+  return String(saved + 1).padStart(3,'0');
+}
+
+function updateLastEstDisplay(){
+  const last = parseInt(localStorage.getItem('avr_est_last') || '0');
+  const el = document.getElementById('last-inv-display');
+  if(el) el.value = String(last).padStart(3,'0');
+}
+
+function incrementEstNo(){
+  const key = 'avr_est_last';
+  const next = parseInt(localStorage.getItem(key) || '0') + 1;
+
+  localStorage.setItem(key, next);
+
+  const s = collectSettings();
+  s.lastEstNo = next;
+
+  saveSettingsCloud(s);
+
+  return String(next).padStart(3,'0');
+}
+
+function setEstCounter(n){
+  const key = 'avr_est_last';
+  const num = parseInt(n) || 0;
+
+  localStorage.setItem(key, num);
+
+  const now = new Date();
+  const defaultPeriod = now.toLocaleString('en-IN',{month:'long',year:'numeric'});
+  localStorage.setItem('avr_current_period', defaultPeriod);
+
+  const s = collectSettings();
+  s.lastEstNo = num;
+  s.savedYear = now.getFullYear();
+
+  saveSettingsCloud(s);
+
+  return String(num + 1).padStart(3,'0');
+}
+
 function getLastInvNo(){
   const saved = parseInt(localStorage.getItem(getDocKey())||'0');
   return String(saved + 1).padStart(3,'0');
@@ -1677,31 +1721,56 @@ function showNormalPreview(){
 }
 
 async function generateCorporatePDF(){
-  const d=getData();
-  // Invoice number — auto use field value, only increment counter if > last saved
-  if(d.docType==='invoice'){
-    const fieldVal = document.getElementById('doc-no').value.trim();
-    const usedNo = fieldVal ? fieldVal.padStart(3,'0') : getLastInvNo();
-    const usedInt = parseInt(usedNo);
-    const lastInt = parseInt(localStorage.getItem('avr_inv_last')||'0');
-    // Only update counter if used number > last saved
-    if(usedInt > lastInt){
-      localStorage.setItem('avr_inv_last', usedInt);
-      const s = collectSettings(); s.lastInvNo = usedInt;
-      saveSettingsCloud(s);
-    }
-    document.getElementById('doc-no').value = usedNo;
-    d.docNo = usedNo;
-    updateLastInvDisplay();
-// ✅ ADD THIS BELOW
+const d = getData();
+
+const fieldVal = document.getElementById('doc-no').value.trim();
+
+let key = '';
+let getNextNo;
+
+// decide type
+if(d.docType === 'invoice'){
+  key = 'avr_inv_last';
+  getNextNo = getLastInvNo;
+}else{
+  key = 'avr_est_last';
+  getNextNo = getLastEstNo;
+}
+
+// ✅ IMPORTANT: always use current field value
+const usedNo = fieldVal;   // <-- FIX (no recalculation)
+
+const usedInt = parseInt(usedNo) || 0;
+const lastInt = parseInt(localStorage.getItem(key)) || 0;
+
+// save only if greater
+if(usedInt > lastInt){
+  localStorage.setItem(key, usedInt);
+
+  const s = collectSettings();
+  if(d.docType === 'invoice'){
+    s.lastInvNo = usedInt;
+  }else{
+    s.lastEstNo = usedInt;
+  }
+
+  saveSettingsCloud(s);
+}
+
+// ✅ update "Last Generated"
 if(d.docType === 'invoice'){
   updateLastInvDisplay();
-  document.getElementById('doc-no').value = getLastInvNo();
-} else {
+}else{
   updateLastEstDisplay();
-  document.getElementById('doc-no').value = getLastEstNo();
 }
-  }
+
+// ✅ NOW calculate next (ONLY HERE)
+const nextNo = getNextNo();
+document.getElementById('doc-no').value = nextNo;
+
+// PDF should use usedNo
+d.docNo = usedNo;
+  
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:'mm',format:'a4'});
   doc.addFileToVFS('Carlito-Regular.ttf', window._carlitoNormal);
@@ -1971,31 +2040,56 @@ y += 3;
 }
 
 async function generateNormalPDF(){
-  const d=getData();
-  // Invoice number — auto use field value, only increment counter if > last saved
-  if(d.docType==='invoice'){
-    const fieldVal = document.getElementById('doc-no').value.trim();
-    const usedNo = fieldVal ? fieldVal.padStart(3,'0') : getLastInvNo();
-    const usedInt = parseInt(usedNo);
-    const lastInt = parseInt(localStorage.getItem('avr_inv_last')||'0');
-    // Only update counter if used number > last saved
-    if(usedInt > lastInt){
-      localStorage.setItem('avr_inv_last', usedInt);
-      const s = collectSettings(); s.lastInvNo = usedInt;
-      saveSettingsCloud(s);
-    }
-    document.getElementById('doc-no').value = usedNo;
-    d.docNo = usedNo;
-    updateLastInvDisplay();
-// ✅ ADD THIS BELOW
+const d = getData();
+
+const fieldVal = document.getElementById('doc-no').value.trim();
+
+let key = '';
+let getNextNo;
+
+// decide type
+if(d.docType === 'invoice'){
+  key = 'avr_inv_last';
+  getNextNo = getLastInvNo;
+}else{
+  key = 'avr_est_last';
+  getNextNo = getLastEstNo;
+}
+
+// ✅ IMPORTANT: always use current field value
+const usedNo = fieldVal;   // <-- FIX (no recalculation)
+
+const usedInt = parseInt(usedNo) || 0;
+const lastInt = parseInt(localStorage.getItem(key)) || 0;
+
+// save only if greater
+if(usedInt > lastInt){
+  localStorage.setItem(key, usedInt);
+
+  const s = collectSettings();
+  if(d.docType === 'invoice'){
+    s.lastInvNo = usedInt;
+  }else{
+    s.lastEstNo = usedInt;
+  }
+
+  saveSettingsCloud(s);
+}
+
+// ✅ update "Last Generated"
 if(d.docType === 'invoice'){
   updateLastInvDisplay();
-  document.getElementById('doc-no').value = getLastInvNo();
-} else {
+}else{
   updateLastEstDisplay();
-  document.getElementById('doc-no').value = getLastEstNo();
 }
-  }
+
+// ✅ NOW calculate next (ONLY HERE)
+const nextNo = getNextNo();
+document.getElementById('doc-no').value = nextNo;
+
+// PDF should use usedNo
+d.docNo = usedNo;
+  
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:'mm',format:'a4'});
   doc.addFileToVFS('Carlito-Regular.ttf', window._carlitoNormal);
