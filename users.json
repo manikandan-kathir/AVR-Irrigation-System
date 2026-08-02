@@ -20,7 +20,14 @@
       "password": "1273026790aa34a8287699a3b920fc9eee23ad040e6b7ca9d4eb5586421c9ad2",
       "avatar": null,
       "createdAt": "2026-08-02T09:40:30.995Z"
+    },
+    {
+      "username": "123@gmail.com",
+      "name": "Admin",
+      "passwordHash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+      "avatar": "",
+      "createdAt": "2026-08-02T16:18:44.396Z"
     }
   ],
-  "updatedAt": "2026-08-02T09:40:31.280Z"
+  "updatedAt": "2026-08-02T16:18:45.328Z"
 }
